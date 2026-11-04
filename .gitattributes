@@ -1,0 +1,6 @@
+*.shader -text
+*.tif -text
+*.meta -text
+*.bundle -text
+*.wav -text
+*.png -text

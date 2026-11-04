@@ -1,0 +1,363 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace NOAvionics
+{
+    /// <summary>
+    /// The chrome every kit v2 console wears (spec §6.2): chamfered frame, header (id / title / page index),
+    /// chips, metrics, icon tabs, paged scrolling body with a reserved gutter, footer. Owns its canvas split:
+    /// the console root is a nested canvas, chips + metrics sit on a live child canvas, each page is its own
+    /// canvas that is disabled (not deactivated) while hidden.
+    /// </summary>
+    public sealed class AvConsole
+    {
+        private readonly float width, height;
+        private readonly AvFrame frame;
+        private readonly Image headerBack, idPlate;
+        private readonly TMP_Text idText, titleText, pageIndex;
+        private readonly RectTransform live, bodyRect, viewport;
+        private readonly AvScrollView scrollView;
+        private readonly RectTransform[] pageRects;
+        private readonly Canvas[] pageCanvases;
+        private readonly AvFlow[] flows;
+        private readonly Image scanCover;
+        private readonly AvDecorGraphic decor;
+        private readonly TMP_Text serial;
+        private string baseTitle;
+        private AvFx scanFx;
+        private AvChip[] chips = new AvChip[0];
+        private AvMetric[] metrics = new AvMetric[0];
+        private AvTabBar tabs;
+        private readonly AvBayPlate bay;
+        private readonly string[][] orders;
+        private readonly TMP_Text bootText;
+        private readonly string id;
+        private int bootLine = -1;
+        private float nextBootLine;
+        private bool booted;
+        // Hidden consoles keep only their current page active, so coming back on screen regenerates one page of
+        // text and graphics instead of all of them; the rest wake one per fast tick behind their disabled canvases.
+        private static readonly System.Collections.Generic.List<AvConsole> all = new System.Collections.Generic.List<AvConsole>(16);
+        private bool parked;
+
+        public RectTransform Root { get; }
+        public AvTicker Ticker { get; }
+        public AvFooter Footer { get; }
+        public int PageCount { get; }
+        public int CurrentPage { get; private set; } = -1;
+        public event Action<int> PageChanged;
+
+        private AvConsole(RectTransform host, string id, string title, int pages, float w, float h)
+        {
+            width = w; height = h; PageCount = Math.Max(1, pages);
+            this.id = id ?? "";
+            orders = new string[PageCount][];
+            Root = AvLay.Child(host, "AvConsole " + id);
+            AvLay.Place(Root, 0f, 0f, w, h);
+            AvLay.Nest(Root, true);
+            Ticker = Root.gameObject.AddComponent<AvTicker>();
+
+            frame = AvFrame.Add(Root, "Frame", AvChamfer.Diagonal(10f));
+            AvLay.Fill(frame.rectTransform);
+            AvBundle.Engraving(Root, 0.035f);
+            headerBack = AvLay.Solid(Root, "Header", Color.clear);
+            idPlate = AvLay.Solid(Root, "IdPlate", Color.clear);
+            AvSurfaceGradient.Apply(headerBack, Color.white, new Color(.65f, .71f, .74f, 1f));
+            AvSurfaceGradient.Apply(idPlate, Color.white, new Color(.65f, .71f, .74f, 1f));
+            idText = AvText.Make(Root, "Id", AvTextRole.Head, id, TextAlignmentOptions.Center);
+            titleText = AvText.Make(Root, "Title", AvTextRole.Head, title);
+            titleText.fontSize = 15f;
+            titleText.characterSpacing = 7f;
+            AvText.Fit(titleText, false);
+            pageIndex = AvText.Make(Root, "PageIndex", AvTextRole.DataSmall, "", TextAlignmentOptions.Center);
+            baseTitle = title;
+            serial = AvText.Make(Root, "Serial", AvTextRole.Micro, AvPortalMath.Serial(id), TextAlignmentOptions.MidlineRight);
+
+            live = AvLay.Child(Root, "Live");
+            AvLay.Nest(live, false);
+
+            bodyRect = AvLay.Child(Root, "Body");
+            bay = new AvBayPlate(bodyRect, this.id);   // first child: pages draw over it
+            scrollView = new AvScrollView(bodyRect, false);
+            viewport = scrollView.Viewport;
+
+            pageRects = new RectTransform[PageCount];
+            pageCanvases = new Canvas[PageCount];
+            flows = new AvFlow[PageCount];
+            for (int i = 0; i < PageCount; i++)
+            {
+                pageRects[i] = AvLay.Child(viewport, "Page " + (i + 1));
+                pageCanvases[i] = AvLay.Nest(pageRects[i], true);
+                flows[i] = new AvFlow(pageRects[i], Ticker, w);
+            }
+
+            scanCover = AvLay.Solid(bodyRect, "ScanCover", Color.clear);
+            scanCover.enabled = false;
+            bootText = AvText.Make(bodyRect, "Boot", AvTextRole.DataSmall, "", TextAlignmentOptions.TopLeft);
+            bootText.enabled = false;
+
+            var decorGo = new GameObject("Decor", typeof(RectTransform), typeof(CanvasRenderer));
+            decorGo.transform.SetParent(Root, false);
+            AvLay.Fill((RectTransform)decorGo.transform);
+            decor = decorGo.AddComponent<AvDecorGraphic>();
+            decor.raycastTarget = false;
+
+            Footer = new AvFooter(Root);
+            Root.gameObject.AddComponent<AvHelpScope>().Footer = Footer;
+            Ticker.Register(Footer);
+            Ticker.Frame = Animate;
+            Ticker.Add(-1, AvTickRate.Slow, Footer.Tick);
+            Ticker.Add(-1, AvTickRate.Slow, SeatBay);
+            Ticker.Add(-1, AvTickRate.Fast, Unpark);
+            Ticker.Shown = Wake;
+            if (Application.isPlaying && PageCount > 1) { all.Add(this); AvFxDriver.EnsureRunning(); }
+            Restyle();
+            Ticker.Register(new AvRestyleHook(Restyle));
+        }
+
+        public static AvConsole Build(RectTransform host, string id, string title, int pages,
+            float width = AvTokens.PanelWidth, float height = AvTokens.PanelHeight) =>
+            new AvConsole(host, id, title, pages, width, height);
+
+        public void SetTitle(string t) { baseTitle = t ?? ""; ShowTitle(); }
+
+        private void ShowTitle()
+        {
+            string t = baseTitle;
+            if (titleText.text != t) titleText.text = t;
+        }
+
+        public AvChip[] Chips(int count)
+        {
+            chips = new AvChip[Mathf.Clamp(count, 1, 3)];
+            for (int i = 0; i < chips.Length; i++) { chips[i] = new AvChip(live); Ticker.Register(chips[i]); }
+            Layout();
+            return chips;
+        }
+
+        public AvMetric[] Metrics(params string[] keys)
+        {
+            int n = Mathf.Clamp(keys.Length, 1, 4);
+            metrics = new AvMetric[n];
+            for (int i = 0; i < n; i++) { metrics[i] = new AvMetric(live, keys[i]); Ticker.Register(metrics[i]); }
+            Layout();
+            return metrics;
+        }
+
+        public AvTabBar Tabs(params (AvIcon icon, string label)[] items)
+        {
+            tabs = new AvTabBar(Root, items, SetPage);
+            Ticker.Register(tabs);
+            Layout();
+            return tabs;
+        }
+
+        public AvFlow Page(int index) => flows[Mathf.Clamp(index, 0, PageCount - 1)];
+
+        /// <summary>
+        /// Standing orders for a page: two to four short usage notes in the unit's own voice. They print on the bay
+        /// cover that fills the page when its content ends above the footer, most important first (the cover
+        /// drops trailing lines that do not fit).
+        /// </summary>
+        public void Orders(int page, params string[] lines)
+        {
+            if (page < 0 || page >= PageCount) return;
+            orders[page] = lines;
+            SeatBay();
+        }
+
+        public void SetPage(int index)
+        {
+            index = Mathf.Clamp(index, 0, PageCount - 1);
+            if (!pageRects[index].gameObject.activeSelf) pageRects[index].gameObject.SetActive(true);
+            for (int i = 0; i < PageCount; i++)
+            {
+                bool on = i == index;
+                pageCanvases[i].enabled = on;
+                var ray = pageRects[i].GetComponent<GraphicRaycaster>();
+                if (ray != null) ray.enabled = on;
+            }
+            scrollView.Scroll.content = pageRects[index];
+            Ticker.ActivePage = index;
+            if (tabs != null && tabs.Selected != index) tabs.Select(index, false);
+            pageIndex.text = (index + 1).ToString("00", System.Globalization.CultureInfo.InvariantCulture) + "/" +
+                             PageCount.ToString("00", System.Globalization.CultureInfo.InvariantCulture);
+            bool changed = CurrentPage != index;
+            CurrentPage = index;
+            if (changed) { StartScan(); PageChanged?.Invoke(index); }
+            // Flush deferred layout after page callbacks, including a same-page reopen.
+            flows[CurrentPage].Relayout();
+            scrollView.Scroll.verticalNormalizedPosition = 1f;
+            SeatBay();
+        }
+
+        public void Finish()
+        {
+            Layout();
+            foreach (AvFlow f in flows) f.Relayout();
+            SetPage(CurrentPage < 0 ? 0 : CurrentPage);
+        }
+
+        // The bay cover takes whatever the current page leaves between its last part and the footer.
+        private void SeatBay()
+        {
+            if (CurrentPage < 0) return;
+            float content = flows[CurrentPage].ContentHeight;
+            // The placed body, not the height Layout chose: a console may shrink its body to dock a bar under it (MIS).
+            bay.Set(AvGridTokens.Pad, content, width - 2f * AvGridTokens.Pad - AvGridTokens.Gutter,
+                bodyRect.sizeDelta.y - content - AvGridTokens.Pad, CurrentPage, orders[CurrentPage]);
+        }
+
+        private void Layout()
+        {
+            float pad = AvGridTokens.Pad, y = 0f, inner = width - 2f * pad;
+            AvLay.Place(headerBack.rectTransform, 0f, 0f, width, AvGridTokens.Header);
+            AvLay.Place(idPlate.rectTransform, 0f, 0f, 56f, AvGridTokens.Header);
+            AvLay.Place(idText.rectTransform, 0f, 0f, 56f, AvGridTokens.Header);
+            AvLay.Place(titleText.rectTransform, 66f, 0f, width - 66f - 116f, AvGridTokens.Header);
+            AvLay.Place(serial.rectTransform, width - 116f, 0f, 54f, AvGridTokens.Header);
+            decor.RulerTop = AvGridTokens.Header; decor.SetVerticesDirty();
+            AvLay.Place(pageIndex.rectTransform, width - 60f, 0f, 56f, AvGridTokens.Header);
+            y += AvGridTokens.Header + 4f;
+
+            AvLay.Place(live, 0f, 0f, width, height);
+            if (chips.Length > 0)
+            {
+                float cw = AvFlowMath.ColumnWidth(inner, chips.Length, 4f);
+                for (int i = 0; i < chips.Length; i++) chips[i].Place(new AvSlot(pad + i * (cw + 4f), y, cw, AvGridTokens.ChipStrip));
+                y += AvGridTokens.ChipStrip + 6f;
+            }
+            if (metrics.Length > 0)
+            {
+                float mw = AvFlowMath.ColumnWidth(inner, metrics.Length, 4f);
+                for (int i = 0; i < metrics.Length; i++) metrics[i].Place(new AvSlot(pad + i * (mw + 4f), y, mw, AvGridTokens.Metric));
+                y += AvGridTokens.Metric + 6f;
+            }
+            if (tabs != null) { float th = tabs.Measure(inner); tabs.Place(new AvSlot(pad, y, inner, th)); y += th + 4f; }
+
+            float footerH = Footer.Measure(width);
+            Footer.Place(new AvSlot(0f, height - footerH, width, footerH));
+            float bodyH = Mathf.Max(0f, height - footerH - y);
+            AvLay.Place(bodyRect, 0f, y, width, bodyH);
+            scrollView.Place(width, bodyH);
+            foreach (AvFlow f in flows) f.ViewportHeight = bodyH;
+            AvLay.Place(scanCover.rectTransform, 0f, 0f, width, bodyH);
+            AvLay.Place(bootText.rectTransform, AvGridTokens.Pad + 4f, AvGridTokens.Pad, width - 2f * AvGridTokens.Pad - 8f, 96f);
+            for (int i = 0; i < PageCount; i++) { pageRects[i].anchoredPosition = Vector2.zero; }
+        }
+
+        /// <summary>Parks the off-screen pages of every console that is currently hidden (the FX driver calls this each frame).</summary>
+        internal static void ParkHidden()
+        {
+            for (int i = all.Count - 1; i >= 0; i--)
+            {
+                AvConsole c = all[i];
+                if (c.Root == null) { all.RemoveAt(i); continue; }
+                if (c.parked || c.CurrentPage < 0 || c.Root.gameObject.activeInHierarchy) continue;
+                c.parked = true;
+                for (int p = 0; p < c.PageCount; p++)
+                    if (p != c.CurrentPage) c.pageRects[p].gameObject.SetActive(false);
+            }
+        }
+
+        private void Unpark()
+        {
+            if (!parked) return;
+            for (int i = 0; i < PageCount; i++)
+            {
+                if (pageRects[i].gameObject.activeSelf) continue;
+                pageRects[i].gameObject.SetActive(true);
+                return;
+            }
+            parked = false;
+        }
+
+        private void StartScan()
+        {
+            if (AvFxPacking.Resolve(AvFxKind.Scan, AvFxDriver.Tier, AvFxDriver.ReducedMotion) == AvFxKind.None) return;
+            if (scanFx == null) scanFx = AvFx.On(scanCover);
+            if (AvFxDriver.FxMaterial == null) return;
+            scanCover.color = AvStyleHost.FuiColor("ground", AvTheme.Ground);
+            scanCover.enabled = true;
+            scanFx.Play(AvFxKind.Scan, 0.9f, 1f); // param 1 = cover mode (P0 shader)
+            scanUntil = Time.unscaledTime + 0.3f / AvFxPacking.AnimationSpeed;
+        }
+
+        private float scanUntil;
+
+        private void EndScan()
+        {
+            if (scanCover.enabled && Time.unscaledTime >= scanUntil) scanCover.enabled = false;
+        }
+
+        private void Animate()
+        {
+            if (bootLine < 0 && !scanCover.enabled) return;
+            if (AvFxPacking.Resolve(AvFxKind.Scan, AvFxDriver.Tier, AvFxDriver.ReducedMotion) == AvFxKind.None)
+            {
+                bootLine = -1;
+                bootText.enabled = scanCover.enabled = false;
+                return;
+            }
+            BootTick();
+            EndScan();
+        }
+
+        private static readonly string[] BootSteps = { "BIT", "BUS A/B", "SYMBOLOGY" };
+
+        // Back on screen: the first time a console powers up it prints its self-test, after that a scan wipe.
+        private void Wake()
+        {
+            if (AvFxPacking.Resolve(AvFxKind.Scan, AvFxDriver.Tier, AvFxDriver.ReducedMotion) == AvFxKind.None ||
+                AvFxDriver.FxMaterial == null) return;
+            if (booted) { StartScan(); return; }
+            booted = true;
+            if (scanFx == null) scanFx = AvFx.On(scanCover);
+            scanFx.Clear();
+            scanCover.color = AvStyleHost.FuiColor("ground", AvTheme.Ground);
+            scanCover.enabled = true;
+            scanUntil = float.MaxValue;
+            bootText.text = "";
+            bootText.enabled = true;
+            bootLine = 0;
+            nextBootLine = Time.unscaledTime;
+        }
+
+        private void BootTick()
+        {
+            if (bootLine < 0 || Time.unscaledTime < nextBootLine) return;
+            nextBootLine = Time.unscaledTime + .025f;
+            if (bootLine == 0) bootText.text = id + " DISPLAY PROCESSOR · " + AvPortalMath.Serial(id);
+            else if (bootLine <= BootSteps.Length) bootText.text += "\n" + BootSteps[bootLine - 1].PadRight(12, '.') + " OK";
+            else
+            {
+                bootLine = -1;
+                bootText.enabled = false;
+                scanUntil = 0f;   // if the wipe cannot play (FX switched off meanwhile) the cover still clears next tick
+                StartScan();
+                return;
+            }
+            bootLine++;
+        }
+
+        private void Restyle()
+        {
+            AvStyle c = AvStyleHost.FuiStyle("console");
+            frame.Paint(AvStyleHost.Resolve(c.Background, AvTheme.Ground), AvStyleHost.Resolve(c.Border, AvTheme.Frame));
+            AvStyle h = AvStyleHost.FuiStyle("header");
+            headerBack.color = AvStyleHost.Resolve(h.Background, AvTheme.Surface);
+            AvStyle p = AvStyleHost.FuiStyle("id-plate");
+            idPlate.color = AvStyleHost.Resolve(p.Background, AvTheme.SurfaceRaised);
+            idText.color = AvStyleHost.Resolve(p.Color, AvTheme.TextPrimary);
+            titleText.color = AvStyleHost.FuiInk("title", AvTheme.TextPrimary);
+            pageIndex.color = AvStyleHost.FuiInk("page-index", AvTheme.Dim);
+            decor.color = AvStyleHost.FuiFill("decor", AvTheme.Hairline);
+            serial.color = AvStyleHost.FuiInk("decor", AvTheme.Disabled);
+            bootText.color = AvStyleHost.FuiInk("section-title", AvTheme.RailInfo);
+            bay.Restyle();
+            scrollView.Restyle();
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+  "plugin": "aaron.boscali.weather-unified",
+  "name": "Client Effects & Weather",
+  "author": "Kelly D Ripper and contributors",
+  "description": "Client-side weather, cockpit, ocean, audio, lighting and battlefield effects. Open FX on the map MFD. Weather controls are single-player only.",
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/Kelly-D-Ripper/Kellys-Client-Effects"
+    },
+    {
+      "label": "Releases",
+      "url": "https://github.com/Kelly-D-Ripper/Kellys-Client-Effects/releases"
+    }
+  ]
+}

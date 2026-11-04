@@ -1,0 +1,73 @@
+using System;
+using BoscaliSummer.Core.Math;
+
+namespace BoscaliSummer.Modules.Weather.Domain
+{
+    /// <summary>
+    /// Pure response curves for the rain atmosphere layer: how much local rain thickens
+    /// and greys the vanilla haze, dims ambient light, tints falling streaks, and how the
+    /// runtime tells its own RenderSettings writes apart from vanilla's 1 Hz rewrite.
+    /// Engine-agnostic; covered by RainSkyMathTests.
+    /// </summary>
+    internal static class RainSkyMath
+    {
+        /// <summary>Storm fog density relative to vanilla's; about half the visibility.</summary>
+        public const float MaxFogMultiplier = 2.6f;
+
+        /// <summary>Floor for ambient dimming so a storm never turns the cockpit black.</summary>
+        public const float MinAmbientMultiplier = 0.62f;
+
+        public static float FogMultiplier(float rain) => 1f + (MaxFogMultiplier - 1f) * Scalar.Clamp01(rain);
+
+        /// <summary>
+        /// Pull the fog colour toward its own luminance (less saturated) and darken it a
+        /// little, both scaled by rain. Identity when dry.
+        /// </summary>
+        public static void FogTint(float rain, ref float r, ref float g, ref float b)
+        {
+            float k = Scalar.Clamp01(rain);
+            if (k <= 0f) return;
+            // Native fog and sky colours are HDR. Clamping each channel to one made
+            // the first trace of rain abruptly clip them and change their colour balance.
+            // Double intermediates keep even large finite HDR inputs finite.
+            double lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            double grey = 0.55 * k;
+            double dark = 1.0 - 0.28 * k;
+            r = (float)Math.Max(0.0, (r + (lum - r) * grey) * dark);
+            g = (float)Math.Max(0.0, (g + (lum - g) * grey) * dark);
+            b = (float)Math.Max(0.0, (b + (lum - b) * grey) * dark);
+        }
+
+        public static float AmbientMultiplier(float rain) => 1f - (1f - MinAmbientMultiplier) * Scalar.Clamp01(rain);
+
+        /// <summary>Ambient kept under a cloud deck: a full overcast overhead takes 55 % (start value for the capped native conditions, tuned on the bench; spec 8.1).</summary>
+        public static float ShadeAmbient(float shade) => 1f - 0.55f * Scalar.Clamp01(shade);
+
+        /// <summary>Extra low haze under a cloud deck: up to twice as thick.</summary>
+        public static float ShadeFog(float shade) => 1f + 1.0f * Scalar.Clamp01(shade);
+
+        /// <summary>
+        /// True when a value read back equals the one we last wrote (float re-read noise
+        /// tolerated); false means vanilla or someone else rewrote it since.
+        /// </summary>
+        public static bool IsOwnWrite(float written, float now)
+        {
+            float tolerance = Math.Max(1e-7f, Math.Abs(written) * 1e-4f);
+            return Math.Abs(now - written) <= tolerance;
+        }
+
+        /// <summary>
+        /// Falling-streak colour: the fog colour pulled toward pale water and scaled by
+        /// light level, so streaks sit inside the haze instead of glowing white.
+        /// </summary>
+        public static void StreakColor(float fogR, float fogG, float fogB, float lightLevel,
+            out float r, out float g, out float b)
+        {
+            float light = Math.Max(Scalar.Clamp01(lightLevel), 0.22f) * 0.55f;
+            const float blend = 0.45f;
+            r = (fogR + (0.80f - fogR) * blend) * light;
+            g = (fogG + (0.86f - fogG) * blend) * light;
+            b = (fogB + (0.95f - fogB) * blend) * light;
+        }
+    }
+}

@@ -1,0 +1,91 @@
+using System;
+using System.IO;
+using UnityEngine;
+
+namespace NOAvionics
+{
+    /// <summary>The kit's sheet: a palette layered over avionics.fui.avss.</summary>
+    public static partial class AvStyleHost
+    {
+        private static AvStyleSheet fui;
+
+        public static AvThemeId Theme { get; private set; } = AvThemeId.Portal;
+        public static int FuiGeneration { get; private set; }
+
+        public static AvStyleSheet Fui
+        {
+            get
+            {
+                if (fui == null) SetTheme(Theme);
+                return fui;
+            }
+        }
+
+        /// <summary>The Custom scheme's palette text (<see cref="AvThemes.CustomPalette"/>); the host mod keeps it current.</summary>
+        public static string CustomPalette = AvThemes.CustomPalette(190f, 200f, 0.6f);
+
+        /// <summary>A scheme's palette sheet: the pilot's override file, else the shipped (or generated) one.</summary>
+        public static string PaletteText(AvThemeId id) =>
+            ReadFile(AvThemes.OverrideFile(id)) ?? (id == AvThemeId.Custom ? CustomPalette : ReadResource(AvThemes.PaletteResource(id)));
+
+        /// <summary>Compose palette + base, parse, and bump the generation. Never throws; keeps the old sheet on total failure.</summary>
+        public static void SetTheme(AvThemeId id)
+        {
+            try
+            {
+                string palette = PaletteText(id);
+                string baseSheet = ReadFile(AvThemes.BaseOverrideFile) ?? ReadResource(AvThemes.BaseResource);
+                AvStyleSheet parsed = AvStyleSheet.Parse(AvThemes.Compose(palette, baseSheet));
+                foreach (string e in parsed.Errors) Warn("avionics.fui (" + id + ") " + e);
+                if (parsed.RuleCount == 0 && fui != null) { Warn("keeping the previous v2 sheet"); return; }
+                fui = parsed;
+                Theme = id;
+                FuiGeneration++;
+                Info("avionics v2 sheet: theme " + id + " (" + parsed.RuleCount + " rules)");
+            }
+            catch (Exception e)
+            {
+                Warn("avionics v2 sheet failed: " + e.Message);
+                if (fui == null) fui = AvStyleSheet.Parse("");
+            }
+        }
+
+        public static AvStyle FuiStyle(string classes, string state = null) => Fui.Resolve(classes, state);
+
+        /// <summary>The text colour of a class list in the live sheet (optionally in an interaction <paramref name="state"/>), or <paramref name="fallback"/>.</summary>
+        public static Color FuiInk(string classes, Color fallback, string state = null) =>
+            Resolve(FuiStyle(classes, state).Color, fallback);
+
+        /// <summary>The fill colour of a class list in the live sheet, or <paramref name="fallback"/>.</summary>
+        public static Color FuiFill(string classes, Color fallback, string state = null) =>
+            Resolve(FuiStyle(classes, state).Background, fallback);
+
+        /// <summary>The border colour of a class list in the live sheet, or <paramref name="fallback"/>.</summary>
+        public static Color FuiBorder(string classes, Color fallback, string state = null) =>
+            Resolve(FuiStyle(classes, state).Border, fallback);
+
+        /// <summary>A :root role resolved against the live game theme.</summary>
+        public static Color FuiColor(string role, Color fallback)
+        {
+            AvPaint p = Fui.Paint(role, fallback.ToRgba());
+            return Resolve(p, fallback);
+        }
+
+        private static string ReadFile(string relative)
+        {
+            if (configDir == null) return null;
+            string path = Path.Combine(configDir, relative);
+            try { return File.Exists(path) ? File.ReadAllText(path) : null; }
+            catch (Exception e) { Warn("could not read " + path + ": " + e.Message); return null; }
+        }
+
+        private static string ReadResource(string name)
+        {
+            using (Stream s = typeof(AvStyleHost).Assembly.GetManifestResourceStream(name))
+            {
+                if (s == null) return null;
+                using (var r = new StreamReader(s)) return r.ReadToEnd();
+            }
+        }
+    }
+}
