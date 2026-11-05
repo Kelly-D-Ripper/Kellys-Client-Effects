@@ -1,6 +1,6 @@
 # Client Effects & Weather
 
-Apparently Nuclear Option wasn't wet or noisy enough.
+Nuclear Option isnt wet or noisy enough.
 
 Weather, cockpit sounds, ocean effects, lights, trails and other shiny distractions. **Pre-release:** if it catches fire, tell us which bit.
 
