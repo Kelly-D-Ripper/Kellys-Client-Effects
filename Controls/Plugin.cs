@@ -201,7 +201,7 @@ namespace ClientEffectsControlPanel
                     Toggle(Airfield, "Airfield lighting", "Enabled", "Airfield and site lighting");
                     Toggle(Airfield, "Airfield lighting", "Runways", "Runway lights");
                     Toggle(Airfield, "Airfield lighting", "Approach strobes", "Sequenced approach strobes");
-                    Toggle(Airfield, "Airfield lighting", "Flash runway ends", "Flash green/red runway ends");
+                    Toggle(Airfield, "Airfield lighting", "Legacy flashing runway ends", "Flash runway ends (nonstandard)");
                     Toggle(Airfield, "Airfield lighting", "Taxiways", "Taxiway lights");
                     Toggle(Airfield, "Airfield lighting", "Hangars", "Hangar illumination");
                     Toggle(Airfield, "Airfield lighting", "Helipads", "Helipad lights");

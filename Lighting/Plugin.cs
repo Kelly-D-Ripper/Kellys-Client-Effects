@@ -57,7 +57,7 @@ namespace BoscaliAirfieldLighting
             hangars=config.Bind("Airfield lighting","Hangars",true,"Nearby hangar interior lights.");
             helipads=config.Bind("Airfield lighting","Helipads",true,"Perimeter lights on airbase helipad models.");
             industrial=config.Bind("Airfield lighting","Industrial and ports",true,"Light recognized static industrial or port buildings where present.");
-            flashEnds=config.Bind("Airfield lighting","Flash runway ends",true,"Flash the directional green/red end markers. Turn off for steady real-world-style threshold/end lights.");
+            flashEnds=config.Bind("Airfield lighting","Legacy flashing runway ends",false,"Optional nonstandard flashing of runway ends; FAA-style ends are steady by default.");
             strobes=config.Bind("Airfield lighting","Approach strobes",true,"White sequential lights toward each runway threshold.");
             SceneManager.activeSceneChanged += OnSceneChanged;
         }
@@ -215,26 +215,28 @@ namespace BoscaliAirfieldLighting
     {
         private readonly List<Vector3> points=new List<Vector3>();
         private readonly List<Color32> colors=new List<Color32>();
+        private readonly float size,minSize,maxSize;
+        internal BeaconBuilder(float size=1.2f,float minSize=.0014f,float maxSize=.006f){this.size=size;this.minSize=minSize;this.maxSize=maxSize;}
         internal void Add(Vector3 point,Color color){if(points.Count>=3000)return;points.Add(point);colors.Add(color);}
         internal ParticleSystemRenderer Finish(Transform parent,string name,Material material)
         {
             var go=new GameObject(name);go.transform.SetParent(parent,false);
-            var ps=go.AddComponent<ParticleSystem>();var main=ps.main;main.loop=false;main.playOnAwake=false;main.simulationSpace=ParticleSystemSimulationSpace.Local;main.startLifetime=100000f;main.startSpeed=0f;main.startSize=1.2f;main.maxParticles=Mathf.Max(1,points.Count);
+            var ps=go.AddComponent<ParticleSystem>();var main=ps.main;main.loop=false;main.playOnAwake=false;main.simulationSpace=ParticleSystemSimulationSpace.Local;main.startLifetime=100000f;main.startSpeed=0f;main.startSize=size;main.maxParticles=Mathf.Max(1,points.Count);
             var emission=ps.emission;emission.enabled=false;
-            var renderer=go.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.renderMode=ParticleSystemRenderMode.Billboard;renderer.minParticleSize=.0014f;renderer.maxParticleSize=.006f;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
-            go.AddComponent<BeaconLifecycle>().Configure(ps,points.ToArray(),colors.ToArray());
+            var renderer=go.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.renderMode=ParticleSystemRenderMode.Billboard;renderer.minParticleSize=minSize;renderer.maxParticleSize=maxSize;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+            go.AddComponent<BeaconLifecycle>().Configure(ps,points.ToArray(),colors.ToArray(),size);
             return renderer;
         }
     }
     internal sealed class BeaconLifecycle:MonoBehaviour
     {
-        private ParticleSystem particles;private Vector3[] points;private Color32[] colors;
-        internal void Configure(ParticleSystem ps,Vector3[] positions,Color32[] shades){particles=ps;points=positions;colors=shades;Rebuild();}
+        private ParticleSystem particles;private Vector3[] points;private Color32[] colors;private float size;
+        internal void Configure(ParticleSystem ps,Vector3[] positions,Color32[] shades,float particleSize){particles=ps;points=positions;colors=shades;size=particleSize;Rebuild();}
         private void OnEnable(){if(particles!=null)Rebuild();}
         private void Rebuild()
         {
             particles.Clear();particles.Play();
-            for(int i=0;i<points.Length;i++){var p=new ParticleSystem.EmitParams{position=points[i],startColor=colors[i],startSize=1.2f,startLifetime=100000f};particles.Emit(p,1);}
+            for(int i=0;i<points.Length;i++){var p=new ParticleSystem.EmitParams{position=points[i],startColor=colors[i],startSize=size,startLifetime=100000f};particles.Emit(p,1);}
             // Calculate particle bounds before pausing, otherwise Unity may cull
             // the static cloud to the emitter's tiny default bounds.
             particles.Simulate(.001f,false,false,true);
@@ -244,7 +246,7 @@ namespace BoscaliAirfieldLighting
     internal sealed class Field:IDisposable
     {
         internal readonly Airbase airbase;internal readonly GameObject root;internal readonly List<Hangar> hangars=new List<Hangar>();
-        private readonly List<End> ends=new List<End>();private readonly List<MeshRenderer[]> chase=new List<MeshRenderer[]>();
+        private readonly List<End> ends=new List<End>();private readonly List<RunwayPair> pairs=new List<RunwayPair>();
         private readonly GameObject runway, taxi, pads, hangarFixtures;private ParticleSystemRenderer runwayBeacons;private readonly Vector3 origin;internal int Count{get;private set;}
         internal Vector3 Center=>airbase!=null && airbase.center!=null ? airbase.center.GlobalPosition().AsVector3() : origin;
         private static readonly Color White=new Color(2f,1.9f,1.65f,1),Green=new Color(.15f,2f,.35f,1),Red=new Color(2f,.06f,.025f,1),Blue=new Color(.06f,.35f,2f,1);
@@ -260,7 +262,10 @@ namespace BoscaliAirfieldLighting
                 Vector3 d=end-start;float length=d.magnitude;if(length<100f || length>6000f)continue;d/=length;Vector3 side=Vector3.Cross(Vector3.up,d).normalized;float half=Mathf.Clamp(r.GetWidth()*.5f,5f,40f);
                 int count=Mathf.Clamp(Mathf.CeilToInt(length/70f),2,100);
                 for(int i=0;i<=count;i++){Vector3 p=Vector3.Lerp(start,end,i/(float)count)+Vector3.up*.2f;rw.Lamp(p+side*half,.65f,White);rw.Lamp(p-side*half,.65f,White);distant.Add(p+side*half,White);distant.Add(p-side*half,White);}
-                AddEnd(start,-d,side,half,material,beaconMaterial);AddEnd(end,d,side,half,material,beaconMaterial);
+                // FAA approach-light planes are horizontal at the threshold elevation.
+                Vector3 approach=new Vector3(d.x,0f,d.z).normalized;
+                var a=AddEnd(start,-approach,side,half,length,material,beaconMaterial);var b=AddEnd(end,approach,side,half,length,material,beaconMaterial);
+                pairs.Add(new RunwayPair{first=a,second=b});
             }
             runway=rw.Finish(root.transform,"Runway edges",material);Count+=rw.Count;
             runwayBeacons=distant.Finish(root.transform,"Runway distance beacons",beaconMaterial);
@@ -288,14 +293,54 @@ namespace BoscaliAirfieldLighting
             hangarFixtures=hf.Finish(root.transform,"Hangar fixtures",material);Count+=hf.Count;
             } catch { if(root!=null) UnityEngine.Object.Destroy(root); throw; }
         }
-        private void AddEnd(Vector3 p,Vector3 outward,Vector3 side,float half,Material material,Material beaconMaterial)
+        private End AddEnd(Vector3 p,Vector3 outward,Vector3 side,float half,float length,Material material,Material beaconMaterial)
         {
-            var g=new MeshBuilder();var r=new MeshBuilder();var gb=new BeaconBuilder();var rb=new BeaconBuilder();int count=Mathf.Clamp(Mathf.CeilToInt(half*2f/4f),4,20);
-            for(int i=0;i<=count;i++){Vector3 point=p+side*Mathf.Lerp(-half,half,i/(float)count)+Vector3.up*.3f;g.Lamp(point,.7f,Green);r.Lamp(point,.7f,Red);gb.Add(point,Green);rb.Add(point,Red);}
+            const float feet=.3048f;
+            var g=new MeshBuilder();var r=new MeshBuilder();var gb=new BeaconBuilder();var rb=new BeaconBuilder();
+            float greenHalf=half+45f*feet;int greenSteps=Mathf.CeilToInt(2f*greenHalf/(5f*feet));
+            for(int i=0;i<=greenSteps;i++){Vector3 point=p+side*Mathf.Lerp(-greenHalf,greenHalf,i/(float)greenSteps)+Vector3.up*.3f;g.Lamp(point,.6f,Green);gb.Add(point,Green);}
+            int redSteps=Mathf.Max(1,Mathf.CeilToInt(half*2f/(10f*feet)));
+            for(int i=0;i<=redSteps;i++){Vector3 point=p+side*Mathf.Lerp(-half,half,i/(float)redSteps)+Vector3.up*.3f;r.Lamp(point,.6f,Red);rb.Add(point,Red);}
             var green=g.Finish(root.transform,"Threshold green",material).GetComponent<MeshRenderer>();var red=r.Finish(root.transform,"Runway end red",material).GetComponent<MeshRenderer>();
             var greenBeacon=gb.Finish(root.transform,"Threshold green beacons",beaconMaterial);var redBeacon=rb.Finish(root.transform,"Runway end red beacons",beaconMaterial);
-            ends.Add(new End{position=p+origin,outward=outward,green=green,red=red,greenBeacon=greenBeacon,redBeacon=redBeacon});Count+=g.Count+r.Count;
-            var array=new MeshRenderer[6];for(int i=0;i<array.Length;i++){var b=new MeshBuilder();b.Lamp(p+outward*(40f+45f*i)+Vector3.up*.35f,.85f,White);array[i]=b.Finish(root.transform,"Approach strobe "+i,material).GetComponent<MeshRenderer>();Count+=b.Count;}chase.Add(array);
+            var e=new End{position=p+origin,outward=outward,green=green,red=red,greenBeacon=greenBeacon,redBeacon=redBeacon};ends.Add(e);Count+=g.Count+r.Count;
+            var steady=new MeshBuilder();var distant=new BeaconBuilder(.29f,.00085f,.003f);
+            void Light(Vector3 q,Color color){steady.Lamp(q,.22f,color);distant.Add(q,color);}
+            Color steadyWhite=new Color(.68f,.66f,.58f,1f),steadyRed=new Color(.85f,.045f,.02f,1f);
+            // ALSF-2: 24 five-lamp centerline barrettes, 100 feet apart.
+            for(int station=1;station<=24;station++)
+            {
+                Vector3 center=p+outward*(station*100f*feet)+Vector3.up*.35f;
+                for(int i=-2;i<=2;i++)Light(center+side*(i*1.03f),steadyWhite);
+                if(station<=9)for(int sign=-1;sign<=1;sign+=2)for(int i=-1;i<=1;i++)Light(center+side*(sign*(50f*feet)+i*1.03f),steadyRed);
+                if(station==5)for(int sign=-1;sign<=1;sign+=2)for(int i=0;i<4;i++)Light(center+side*(sign*(7.62f+(i-1.5f)*1.03f)),steadyWhite);
+                if(station==10)for(int sign=-1;sign<=1;sign+=2)for(int i=0;i<8;i++)Light(center+side*(sign*(3.6f+i*1.67f)),steadyWhite);
+            }
+            e.steady=steady.Finish(root.transform,"ALSF-2 steady bars",material).GetComponent<MeshRenderer>();
+            e.steadyBeacon=distant.Finish(root.transform,"ALSF-2 distance beacons",beaconMaterial);Count+=steady.Count;
+            // Creative five-lamp row chase requested for visibility: unlike standard
+            // ALSF-2 individual flashers, each of the 24 steady bars brightens together.
+            e.flash=new MeshRenderer[24];e.flashBeacon=new ParticleSystemRenderer[24];
+            for(int i=0;i<24;i++)
+            {
+                Vector3 center=p+outward*((1+i)*100f*feet)+Vector3.up*.36f;var flash=new MeshBuilder();var beacon=new BeaconBuilder(.38f,.0012f,.003f);
+                for(int lamp=-2;lamp<=2;lamp++){Vector3 point=center+side*(lamp*1.03f);flash.Lamp(point,.26f,White);beacon.Add(point,White);}
+                e.flash[i]=flash.Finish(root.transform,"Approach row flash "+(1+i),material).GetComponent<MeshRenderer>();
+                e.flashBeacon[i]=beacon.Finish(root.transform,"Approach row flash beacon "+(1+i),beaconMaterial);Count+=5;
+            }
+            // Four-unit PAPI on the left as seen by an aircraft approaching the runway.
+            // Placement is approximate because the game's airbases have no surveyed PAPI data.
+            Vector3 left=Vector3.Cross(Vector3.up,outward).normalized;
+            e.papiPosition=p+origin-outward*Mathf.Min(1000f*feet,length*.3f)+left*(half+15f)+Vector3.up*.35f;
+            e.papiWhite=new MeshRenderer[4];e.papiRed=new MeshRenderer[4];e.papiWhiteBeacon=new ParticleSystemRenderer[4];e.papiRedBeacon=new ParticleSystemRenderer[4];
+            for(int i=0;i<4;i++)
+            {
+                Vector3 point=e.papiPosition-origin+left*((3-i)*9f);var white=new MeshBuilder();var redLight=new MeshBuilder();var whitePoint=new BeaconBuilder();var redPoint=new BeaconBuilder();
+                white.Lamp(point,.8f,White);redLight.Lamp(point,.8f,Red);whitePoint.Add(point,White);redPoint.Add(point,Red);
+                e.papiWhite[i]=white.Finish(root.transform,"PAPI white "+i,material).GetComponent<MeshRenderer>();e.papiRed[i]=redLight.Finish(root.transform,"PAPI red "+i,material).GetComponent<MeshRenderer>();
+                e.papiWhiteBeacon[i]=whitePoint.Finish(root.transform,"PAPI white beacon "+i,beaconMaterial);e.papiRedBeacon[i]=redPoint.Finish(root.transform,"PAPI red beacon "+i,beaconMaterial);Count+=2;
+            }
+            return e;
         }
         internal void Set(bool night,bool runwayOn,bool taxiOn,bool padsOn,bool hangarOn,bool chaseOn,bool flashing,Vector3 eye,float time)
         {
@@ -303,13 +348,43 @@ namespace BoscaliAirfieldLighting
             SetActive(runway,available && runwayOn);if(runwayBeacons!=null)runwayBeacons.enabled=available && runwayOn;SetActive(taxi,available && taxiOn);SetActive(pads,available && padsOn);
             SetActive(hangarFixtures,available && hangarOn);
             bool pulse=!flashing || time%1.5f<1.1f;
-            foreach(var e in ends){bool outside=Vector3.Dot(eye-e.position,e.outward)>=0f;e.green.enabled=available&&runwayOn&&pulse&&outside;e.red.enabled=available&&runwayOn&&pulse&&!outside;e.greenBeacon.enabled=e.green.enabled;e.redBeacon.enabled=e.red.enabled;}
-            int phase=5-Mathf.FloorToInt((time%1.5f)/1.5f*6f);
-            foreach(var group in chase)for(int i=0;i<group.Length;i++)group[i].enabled=available&&runwayOn&&chaseOn&&i==phase;
+            foreach(var pair in pairs)
+            {
+                // Keep the current landing end during a rollout. Flip only after the camera
+                // moves beyond the opposite threshold, rather than at runway midpoint.
+                float firstOutside=Vector3.Dot(eye-pair.first.position,pair.first.outward);
+                float secondOutside=Vector3.Dot(eye-pair.second.position,pair.second.outward);
+                if(!pair.initialized){pair.firstActive=firstOutside>=secondOutside;pair.initialized=true;}
+                else if(firstOutside>100f)pair.firstActive=true;
+                else if(secondOutside>100f)pair.firstActive=false;
+                SetEnd(pair.first,pair.firstActive,firstOutside,eye,available,runwayOn,chaseOn,pulse,time);
+                SetEnd(pair.second,!pair.firstActive,secondOutside,eye,available,runwayOn,chaseOn,pulse,time);
+            }
+        }
+        private static void SetEnd(End e,bool landing,float outside,Vector3 eye,bool available,bool runwayOn,bool chaseOn,bool pulse,float time)
+        {
+            bool enabled=available && runwayOn;
+            e.green.enabled=enabled&&pulse&&landing;e.red.enabled=enabled&&pulse&&!landing;
+            e.greenBeacon.enabled=e.green.enabled;e.redBeacon.enabled=e.red.enabled;
+            bool approach=enabled&&landing&&outside>=0f;
+            e.steady.enabled=approach;e.steadyBeacon.enabled=approach;
+            // A short trailing pulse survives a 30 fps frame interval without
+            // skipping rows, while preserving the two-per-second inward chase.
+            float phase=Mathf.Repeat(time,.5f)*48f;
+            for(int i=0;i<e.flash.Length;i++){float age=Mathf.Repeat(phase-(23-i),24f);bool on=approach&&chaseOn&&age<2.4f;e.flash[i].enabled=on;e.flashBeacon[i].enabled=on;}
+            Vector3 sight=eye-e.papiPosition;float along=Vector3.Dot(sight,e.outward);
+            float angle=Mathf.Atan2(sight.y,Mathf.Max(.01f,along))*Mathf.Rad2Deg;
+            for(int i=0;i<4;i++)
+            {
+                float cutoff=i==0?2.5f:i==1?2.833333f:i==2?3.166667f:3.5f;
+                bool white=approach&&along>0f&&angle>=cutoff;bool red=approach&&along>0f&&!white;
+                e.papiWhite[i].enabled=white;e.papiWhiteBeacon[i].enabled=white;e.papiRed[i].enabled=red;e.papiRedBeacon[i].enabled=red;
+            }
         }
         private static void SetActive(GameObject value,bool active){if(value.activeSelf!=active)value.SetActive(active);}
         public void Dispose(){if(root!=null)UnityEngine.Object.Destroy(root);}
-        private sealed class End{internal Vector3 position,outward;internal MeshRenderer green,red;internal ParticleSystemRenderer greenBeacon,redBeacon;}
+        private sealed class End{internal Vector3 position,outward,papiPosition;internal MeshRenderer green,red,steady;internal ParticleSystemRenderer greenBeacon,redBeacon,steadyBeacon;internal MeshRenderer[] flash,papiWhite,papiRed;internal ParticleSystemRenderer[] flashBeacon,papiWhiteBeacon,papiRedBeacon;}
+        private sealed class RunwayPair{internal End first,second;internal bool initialized,firstActive;}
     }
     internal sealed class Site:IDisposable
     {

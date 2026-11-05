@@ -83,7 +83,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Enabled", "Airfield and site lighting"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Runways", "Runway lights"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Approach strobes", "Sequenced approach strobes"),
-            new Item(4, "Toggle", Airfield, "Airfield lighting", "Flash runway ends", "Flash green/red runway ends"),
+            new Item(4, "Toggle", Airfield, "Airfield lighting", "Legacy flashing runway ends", "Flash runway ends (nonstandard)"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Taxiways", "Taxiway lights"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Hangars", "Hangar illumination"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Helipads", "Helipad lights"),

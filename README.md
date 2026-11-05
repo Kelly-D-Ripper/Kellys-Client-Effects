@@ -12,4 +12,4 @@ The DOORMAN card is included. The optional DOORMAN preview groups the pack into 
 
 Want volumetric clouds? Get [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) separately. Clouds but these volumetric ones are very pretty.
 
-Licence notices are included. Full credits are coming in the next release.
+[Credits and changes](CREDITS.md) · Licence notices are included.
