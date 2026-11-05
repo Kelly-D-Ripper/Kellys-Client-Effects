@@ -10,6 +10,6 @@ Install BepInEx, then extract the client ZIP into your Nuclear Option folder. Us
 
 The DOORMAN card is included. The optional DOORMAN preview groups the pack into one entry.
 
-Want volumetric clouds? Get [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) separately. The game will survive without it.
+Want volumetric clouds? Get [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) separately. Clouds but these volumetric ones are very pretty.
 
 Licence notices are included. Full credits are coming in the next release.
