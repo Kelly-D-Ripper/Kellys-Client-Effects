@@ -34,7 +34,7 @@ KROP's NVG effects, nuclear flash effects and added sound-propagation delay are 
 ## Kelly's Client Effects additions and integration
 
 - Unified FX/MET OFFICE controls, MFD integration, DOORMAN metadata and the optional NOAtmoFX bridge.
-- Airfield and site lighting: runway, taxiway, hangar, helipad, industrial and port lights. The experimental approach build adds the five-light chasing rows and approximate PAPI indicators. The row-wide chase is an artistic adaptation, not the individual-flasher pattern of an FAA ALSF-2 installation.
+- Airfield and site lighting: runway, taxiway, hangar, helipad, industrial and port lights, including five-light chasing approach rows and approximate PAPI indicators. The row-wide chase is an artistic adaptation, not the individual-flasher pattern of an FAA ALSF-2 installation.
 - Street-light pool and visibility tuning, weather and water fixes, canopy compatibility work, effect toggles and the integration/performance and bug-fix passes described above.
 
 ## Other authors and assets
