@@ -13,7 +13,7 @@ using BoscaliSummer.Modules.Weather.Presentation;
 
 namespace BoscaliUnifiedWeather
 {
-    [BepInPlugin("aaron.boscali.weather-unified", "Unified Boscali Weather", "0.8.1")]
+    [BepInPlugin("aaron.boscali.weather-unified", "Unified Boscali Weather", "0.8.2")]
     [BepInIncompatibility("com.marci.boscalisummer")]
     [BepInIncompatibility("aaron.boscali.clouds-unified")]
     [BepInDependency("paul.no.clouds", BepInDependency.DependencyFlags.SoftDependency)]

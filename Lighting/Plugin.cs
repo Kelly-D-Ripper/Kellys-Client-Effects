@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace BoscaliAirfieldLighting
 {
-    [BepInPlugin("aaron.boscali.airfield-lighting", "Airfield and industrial lighting prototype", "0.2.0")]
+    [BepInPlugin("aaron.boscali.airfield-lighting", "Airfield and industrial lighting", "0.2.1")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private void Awake()
@@ -52,7 +52,7 @@ namespace BoscaliAirfieldLighting
         {
             log=logger;
             master=config.Bind("Airfield lighting","Enabled",true,"Enable the local experimental airfield and site lighting.");
-            runways=config.Bind("Airfield lighting","Runways",true,"Runway edges, directional green/red ends, and approach strobes.");
+            runways=config.Bind("Airfield lighting","Runways",true,"Directional runway ends, approach bars and strobes; native runway edge lights are retained.");
             taxiways=config.Bind("Airfield lighting","Taxiways",true,"Blue taxiway lights estimated from the airbase taxi routes.");
             hangars=config.Bind("Airfield lighting","Hangars",true,"Nearby hangar interior lights.");
             helipads=config.Bind("Airfield lighting","Helipads",true,"Perimeter lights on airbase helipad models.");
@@ -62,6 +62,7 @@ namespace BoscaliAirfieldLighting
             SceneManager.activeSceneChanged += OnSceneChanged;
         }
         private void OnSceneChanged(Scene from, Scene to) => Clear();
+        private void OnDisable() => Clear();
         private void OnDestroy() { SceneManager.activeSceneChanged -= OnSceneChanged; Clear(); if(material!=null) Destroy(material);if(beaconMaterial!=null)Destroy(beaconMaterial);if(beaconTexture!=null)Destroy(beaconTexture); }
         private void Update()
         {
@@ -248,6 +249,7 @@ namespace BoscaliAirfieldLighting
         internal readonly Airbase airbase;internal readonly GameObject root;internal readonly List<Hangar> hangars=new List<Hangar>();
         private readonly List<End> ends=new List<End>();private readonly List<RunwayPair> pairs=new List<RunwayPair>();
         private readonly GameObject runway, taxi, pads, hangarFixtures;private ParticleSystemRenderer runwayBeacons;private readonly Vector3 origin;internal int Count{get;private set;}
+        private readonly RaycastHit[] groundHits=new RaycastHit[32];
         internal Vector3 Center=>airbase!=null && airbase.center!=null ? airbase.center.GlobalPosition().AsVector3() : origin;
         private static readonly Color White=new Color(2f,1.9f,1.65f,1),Green=new Color(.15f,2f,.35f,1),Red=new Color(2f,.06f,.025f,1),Blue=new Color(.06f,.35f,2f,1);
         internal Field(Airbase source,Transform datum,Material material,Material beaconMaterial)
@@ -255,15 +257,19 @@ namespace BoscaliAirfieldLighting
             airbase=source;origin=source.center.GlobalPosition().AsVector3();root=new GameObject("Airfield lights "+source.name);root.transform.SetParent(datum,false);root.transform.localPosition=origin;
             try {
             var rw=new MeshBuilder();var distant=new BeaconBuilder();
-            if(source.runways!=null) foreach(var r in source.runways)
+            // Native runway edge lights already exist; do not duplicate them.
+            var runways=new List<Airbase.Runway>();
+            if(source.runways!=null)foreach(var entry in source.runways)if(entry!=null && entry.Start!=null && entry.End!=null)runways.Add(entry);
+            runways.Sort((a,b)=>(b.End.position-b.Start.position).sqrMagnitude.CompareTo((a.End.position-a.Start.position).sqrMagnitude));
+            var accepted=new List<Vector3[]>();
+            foreach(var r in runways)
             {
-                if(r==null || r.Start==null || r.End==null)continue;
                 Vector3 start=r.Start.GlobalPosition().AsVector3()-origin, end=r.End.GlobalPosition().AsVector3()-origin;
                 Vector3 d=end-start;float length=d.magnitude;if(length<100f || length>6000f)continue;d/=length;Vector3 side=Vector3.Cross(Vector3.up,d).normalized;float half=Mathf.Clamp(r.GetWidth()*.5f,5f,40f);
-                int count=Mathf.Clamp(Mathf.CeilToInt(length/70f),2,100);
-                for(int i=0;i<=count;i++){Vector3 p=Vector3.Lerp(start,end,i/(float)count)+Vector3.up*.2f;rw.Lamp(p+side*half,.65f,White);rw.Lamp(p-side*half,.65f,White);distant.Add(p+side*half,White);distant.Add(p-side*half,White);}
-                // FAA approach-light planes are horizontal at the threshold elevation.
                 Vector3 approach=new Vector3(d.x,0f,d.z).normalized;
+                if(IsDuplicate(start,end,accepted))continue;
+                if(!FindPavementEnd(start,-approach,side,half,out start) || !FindPavementEnd(end,approach,side,half,out end))continue;
+                accepted.Add(new[]{start,end});length=Vector3.Distance(start,end);
                 var a=AddEnd(start,-approach,side,half,length,material,beaconMaterial);var b=AddEnd(end,approach,side,half,length,material,beaconMaterial);
                 pairs.Add(new RunwayPair{first=a,second=b});
             }
@@ -277,7 +283,7 @@ namespace BoscaliAirfieldLighting
                 {
                     Vector3 a=road.points[i-1].AsVector3()-origin,b=road.points[i].AsVector3()-origin;Vector3 d=b-a;float len=d.magnitude;
                     if(len<1f || len>1000f || ((a+b)*.5f).sqrMagnitude>Mathf.Pow(source.GetRadius()+300f,2))continue;Vector3 side=Vector3.Cross(Vector3.up,d/len).normalized;int n=Mathf.Clamp(Mathf.CeilToInt(len/55f),1,20);
-                    for(int j=0;j<n;j++){Vector3 p=Vector3.Lerp(a,b,j/(float)n)+Vector3.up*.25f;tx.Lamp(p+side*6f,.45f,Blue);tx.Lamp(p-side*6f,.45f,Blue);}
+                    for(int j=0;j<n;j++){Vector3 p=Vector3.Lerp(a,b,j/(float)n);if(TryGround(p+side*6f,out Vector3 left,out _))tx.Lamp(left,.24f,Blue);if(TryGround(p-side*6f,out Vector3 right,out _))tx.Lamp(right,.24f,Blue);}
                 }
             }
             taxi=tx.Finish(root.transform,"Taxiway guides",material);Count+=tx.Count;
@@ -286,32 +292,95 @@ namespace BoscaliAirfieldLighting
             {
                 if(h==null || h.GetSpawnTransform()==null)continue;Transform spawn=h.GetSpawnTransform();Vector3 p=spawn.GlobalPosition().AsVector3();
                 if((p-origin).sqrMagnitude>Mathf.Pow(source.GetRadius()+300f,2))continue;
-                if(h.name.IndexOf("helipad",StringComparison.OrdinalIgnoreCase)>=0){for(int k=0;k<12;k++){float a=k*Mathf.PI*2f/12f;hp.Lamp(p-origin+new Vector3(Mathf.Cos(a)*12f,.2f,Mathf.Sin(a)*12f),.55f,Green);}}
+                if(h.name.IndexOf("helipad",StringComparison.OrdinalIgnoreCase)>=0){for(int k=0;k<12;k++){float a=k*Mathf.PI*2f/12f;if(TryGround(p-origin+new Vector3(Mathf.Cos(a)*12f,0f,Mathf.Sin(a)*12f),out Vector3 point,out _,true))hp.Lamp(point,.24f,Green);}}
                 else if(h.name.IndexOf("hangar",StringComparison.OrdinalIgnoreCase)>=0 || h.name.IndexOf("shelter",StringComparison.OrdinalIgnoreCase)>=0){hangars.Add(h);var light=p-origin+Vector3.up*5f;hf.Lamp(light+spawn.right*6f,.75f,new Color(2f,1.5f,.9f,1f));hf.Lamp(light-spawn.right*6f,.75f,new Color(2f,1.5f,.9f,1f));}
             }
             pads=hp.Finish(root.transform,"Helipads",material);Count+=hp.Count;
             hangarFixtures=hf.Finish(root.transform,"Hangar fixtures",material);Count+=hf.Count;
             } catch { if(root!=null) UnityEngine.Object.Destroy(root); throw; }
         }
+        private static bool IsDuplicate(Vector3 start,Vector3 end,List<Vector3[]> accepted)
+        {
+            Vector3 axis=Vector3.ProjectOnPlane(end-start,Vector3.up).normalized;
+            foreach(var existing in accepted)
+            {
+                Vector3 other=Vector3.ProjectOnPlane(existing[1]-existing[0],Vector3.up);float length=other.magnitude;
+                if(length<1f)continue;other/=length;if(Mathf.Abs(Vector3.Dot(axis,other))<.999f)continue;
+                Vector3 a=Vector3.ProjectOnPlane(start-existing[0],Vector3.up),b=Vector3.ProjectOnPlane(end-existing[0],Vector3.up);
+                float t0=Vector3.Dot(a,other),t1=Vector3.Dot(b,other);
+                if((a-other*t0).sqrMagnitude<36f && (b-other*t1).sqrMagnitude<36f && Mathf.Min(t0,t1)>=-10f && Mathf.Max(t0,t1)<=length+10f)return true;
+            }
+            return false;
+        }
+        // Raycast only known ground surfaces; never put runway lights on a building,
+        // on the sea, or in the air when the map has no usable terrain collider.
+        private bool TryGround(Vector3 point,out Vector3 grounded,out Collider surface,bool preferHelipad=false)
+        {
+            grounded=default;surface=null;Vector3 global=point+origin;
+            Vector3 local=new GlobalPosition(global.x,global.y,global.z).ToLocalPosition();
+            int n=Physics.RaycastNonAlloc(local+Vector3.up*250f,Vector3.down,groundHits,500f,PhysicsLayers.StaticsMask,QueryTriggerInteraction.Ignore);
+            // A full buffer may have omitted the actual surface. Skipping the marker
+            // is safer than selecting from an incomplete, unordered set of hits.
+            if(n==groundHits.Length)return false;
+            float best=float.MaxValue;RaycastHit chosen=default;
+            for(int i=0;i<n;i++)
+            {
+                var hit=groundHits[i];if(hit.collider==null || hit.normal.y<.65f || hit.point.y<=Datum.LocalSeaY+.1f)continue;
+                string name=hit.collider.name;
+                if(name.IndexOf("building",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("hangar",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("shelter",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("warehouse",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("roof",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("tower",StringComparison.OrdinalIgnoreCase)>=0)continue;
+                bool known=hit.collider is TerrainCollider || name.IndexOf("terrain",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("runway",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("airfield",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("helipad",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("road",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("ground",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("pavement",StringComparison.OrdinalIgnoreCase)>=0 || name.IndexOf("asphalt",StringComparison.OrdinalIgnoreCase)>=0;
+                if(!known)continue;float delta=Mathf.Abs(hit.point.y-local.y);if(preferHelipad && name.IndexOf("helipad",StringComparison.OrdinalIgnoreCase)>=0)delta-=1000f;if(delta<best){best=delta;chosen=hit;}
+            }
+            if(best==float.MaxValue)return false;
+            grounded=chosen.point.ToGlobalPosition().AsVector3()-origin+Vector3.up*.04f;surface=chosen.collider;return true;
+        }
+        private bool PavedCrossSection(Vector3 p,Vector3 side,float half,out Vector3 center)
+        {
+            center=default;
+            if(!TryGround(p,out center,out Collider middle) || !IsPavement(middle))return false;
+            return TryGround(p+side*half*.7f,out _,out Collider left) && IsPavement(left) && TryGround(p-side*half*.7f,out _,out Collider right) && IsPavement(right);
+        }
+        private static bool IsPavement(Collider c)
+        {
+            if(c==null)return false;string n=c.name;
+            return n.IndexOf("road",StringComparison.OrdinalIgnoreCase)>=0 || n.IndexOf("runway",StringComparison.OrdinalIgnoreCase)>=0 || n.IndexOf("pavement",StringComparison.OrdinalIgnoreCase)>=0 || n.IndexOf("asphalt",StringComparison.OrdinalIgnoreCase)>=0;
+        }
+        private bool FindPavementEnd(Vector3 node,Vector3 outward,Vector3 side,float half,out Vector3 end)
+        {
+            end=default;if(!PavedCrossSection(node,side,half,out _))return false;
+            float last=0f;int misses=0;float firstMiss=0f;
+            for(float distance=15f;distance<=450f;distance+=15f)
+            {
+                if(PavedCrossSection(node+outward*distance,side,half,out _)){last=distance;misses=0;}
+                else {if(misses++==0)firstMiss=distance;if(misses>=2)break;}
+            }
+            // An AI runway node is not necessarily a physical pavement endpoint.
+            // Omit ambiguous layouts instead of placing a false red/green threshold.
+            if(misses<2)return false;
+            float low=last,high=firstMiss;
+            for(int i=0;i<5;i++){float mid=(low+high)*.5f;if(PavedCrossSection(node+outward*mid,side,half,out _))low=mid;else high=mid;}
+            return PavedCrossSection(node+outward*Mathf.Max(0f,low-1f),side,half,out end);
+        }
         private End AddEnd(Vector3 p,Vector3 outward,Vector3 side,float half,float length,Material material,Material beaconMaterial)
         {
             const float feet=.3048f;
-            var g=new MeshBuilder();var r=new MeshBuilder();var gb=new BeaconBuilder();var rb=new BeaconBuilder();
+            var g=new MeshBuilder();var r=new MeshBuilder();var gb=new BeaconBuilder(.28f,.0012f,.003f);var rb=new BeaconBuilder(.28f,.0012f,.003f);
             float greenHalf=half+45f*feet;int greenSteps=Mathf.CeilToInt(2f*greenHalf/(5f*feet));
-            for(int i=0;i<=greenSteps;i++){Vector3 point=p+side*Mathf.Lerp(-greenHalf,greenHalf,i/(float)greenSteps)+Vector3.up*.3f;g.Lamp(point,.6f,Green);gb.Add(point,Green);}
+            for(int i=0;i<=greenSteps;i++){if(!TryGround(p+side*Mathf.Lerp(-greenHalf,greenHalf,i/(float)greenSteps),out Vector3 point,out _))continue;g.Lamp(point,.18f,Green);gb.Add(point,Green);}
             int redSteps=Mathf.Max(1,Mathf.CeilToInt(half*2f/(10f*feet)));
-            for(int i=0;i<=redSteps;i++){Vector3 point=p+side*Mathf.Lerp(-half,half,i/(float)redSteps)+Vector3.up*.3f;r.Lamp(point,.6f,Red);rb.Add(point,Red);}
+            for(int i=0;i<=redSteps;i++){if(!TryGround(p+side*Mathf.Lerp(-half,half,i/(float)redSteps),out Vector3 point,out _))continue;r.Lamp(point,.18f,Red);rb.Add(point,Red);}
             var green=g.Finish(root.transform,"Threshold green",material).GetComponent<MeshRenderer>();var red=r.Finish(root.transform,"Runway end red",material).GetComponent<MeshRenderer>();
             var greenBeacon=gb.Finish(root.transform,"Threshold green beacons",beaconMaterial);var redBeacon=rb.Finish(root.transform,"Runway end red beacons",beaconMaterial);
             var e=new End{position=p+origin,outward=outward,green=green,red=red,greenBeacon=greenBeacon,redBeacon=redBeacon};ends.Add(e);Count+=g.Count+r.Count;
             var steady=new MeshBuilder();var distant=new BeaconBuilder(.29f,.00085f,.003f);
-            void Light(Vector3 q,Color color){steady.Lamp(q,.22f,color);distant.Add(q,color);}
+            void Light(Vector3 q,Color color){if(TryGround(q,out Vector3 point,out _)){steady.Lamp(point,.16f,color);distant.Add(point,color);}}
             Color steadyWhite=new Color(.68f,.66f,.58f,1f),steadyRed=new Color(.85f,.045f,.02f,1f);
+            var rowPoints=new List<Vector3>[24];
             // ALSF-2: 24 five-lamp centerline barrettes, 100 feet apart.
             for(int station=1;station<=24;station++)
             {
-                Vector3 center=p+outward*(station*100f*feet)+Vector3.up*.35f;
-                for(int i=-2;i<=2;i++)Light(center+side*(i*1.03f),steadyWhite);
+                Vector3 center=p+outward*(station*100f*feet);var points=new List<Vector3>(5);rowPoints[station-1]=points;
+                for(int i=-2;i<=2;i++)if(TryGround(center+side*(i*1.03f),out Vector3 grounded,out _)){steady.Lamp(grounded,.16f,steadyWhite);distant.Add(grounded,steadyWhite);points.Add(grounded);}
                 if(station<=9)for(int sign=-1;sign<=1;sign+=2)for(int i=-1;i<=1;i++)Light(center+side*(sign*(50f*feet)+i*1.03f),steadyRed);
                 if(station==5)for(int sign=-1;sign<=1;sign+=2)for(int i=0;i<4;i++)Light(center+side*(sign*(7.62f+(i-1.5f)*1.03f)),steadyWhite);
                 if(station==10)for(int sign=-1;sign<=1;sign+=2)for(int i=0;i<8;i++)Light(center+side*(sign*(3.6f+i*1.67f)),steadyWhite);
@@ -323,29 +392,30 @@ namespace BoscaliAirfieldLighting
             e.flash=new MeshRenderer[24];e.flashBeacon=new ParticleSystemRenderer[24];
             for(int i=0;i<24;i++)
             {
-                Vector3 center=p+outward*((1+i)*100f*feet)+Vector3.up*.36f;var flash=new MeshBuilder();var beacon=new BeaconBuilder(.38f,.0012f,.003f);
-                for(int lamp=-2;lamp<=2;lamp++){Vector3 point=center+side*(lamp*1.03f);flash.Lamp(point,.26f,White);beacon.Add(point,White);}
+                var flash=new MeshBuilder();var beacon=new BeaconBuilder(.30f,.0012f,.003f);
+                foreach(Vector3 point in rowPoints[i]){flash.Lamp(point+Vector3.up*.01f,.20f,White);beacon.Add(point+Vector3.up*.01f,White);}
                 e.flash[i]=flash.Finish(root.transform,"Approach row flash "+(1+i),material).GetComponent<MeshRenderer>();
-                e.flashBeacon[i]=beacon.Finish(root.transform,"Approach row flash beacon "+(1+i),beaconMaterial);Count+=5;
+                e.flashBeacon[i]=beacon.Finish(root.transform,"Approach row flash beacon "+(1+i),beaconMaterial);Count+=rowPoints[i].Count;
             }
             // Four-unit PAPI on the left as seen by an aircraft approaching the runway.
             // Placement is approximate because the game's airbases have no surveyed PAPI data.
             Vector3 left=Vector3.Cross(Vector3.up,outward).normalized;
-            e.papiPosition=p+origin-outward*Mathf.Min(1000f*feet,length*.3f)+left*(half+15f)+Vector3.up*.35f;
+            Vector3 desiredPapi=p-outward*Mathf.Min(1000f*feet,length*.3f)+left*(half+15f);
+            bool papiGround=TryGround(desiredPapi,out Vector3 papiBase,out _);e.papiPosition=(papiGround?papiBase:desiredPapi)+origin;
             e.papiWhite=new MeshRenderer[4];e.papiRed=new MeshRenderer[4];e.papiWhiteBeacon=new ParticleSystemRenderer[4];e.papiRedBeacon=new ParticleSystemRenderer[4];
             for(int i=0;i<4;i++)
             {
-                Vector3 point=e.papiPosition-origin+left*((3-i)*9f);var white=new MeshBuilder();var redLight=new MeshBuilder();var whitePoint=new BeaconBuilder();var redPoint=new BeaconBuilder();
-                white.Lamp(point,.8f,White);redLight.Lamp(point,.8f,Red);whitePoint.Add(point,White);redPoint.Add(point,Red);
+                var white=new MeshBuilder();var redLight=new MeshBuilder();var whitePoint=new BeaconBuilder(.30f,.0012f,.003f);var redPoint=new BeaconBuilder(.30f,.0012f,.003f);
+                if(papiGround && TryGround(desiredPapi+left*((3-i)*9f),out Vector3 point,out _)){white.Lamp(point,.2f,White);redLight.Lamp(point,.2f,Red);whitePoint.Add(point,White);redPoint.Add(point,Red);Count+=2;}
                 e.papiWhite[i]=white.Finish(root.transform,"PAPI white "+i,material).GetComponent<MeshRenderer>();e.papiRed[i]=redLight.Finish(root.transform,"PAPI red "+i,material).GetComponent<MeshRenderer>();
-                e.papiWhiteBeacon[i]=whitePoint.Finish(root.transform,"PAPI white beacon "+i,beaconMaterial);e.papiRedBeacon[i]=redPoint.Finish(root.transform,"PAPI red beacon "+i,beaconMaterial);Count+=2;
+                e.papiWhiteBeacon[i]=whitePoint.Finish(root.transform,"PAPI white beacon "+i,beaconMaterial);e.papiRedBeacon[i]=redPoint.Finish(root.transform,"PAPI red beacon "+i,beaconMaterial);
             }
             return e;
         }
         internal void Set(bool night,bool runwayOn,bool taxiOn,bool padsOn,bool hangarOn,bool chaseOn,bool flashing,Vector3 eye,float time)
         {
             bool available=night && airbase!=null && !airbase.disabled;
-            SetActive(runway,available && runwayOn);if(runwayBeacons!=null)runwayBeacons.enabled=available && runwayOn;SetActive(taxi,available && taxiOn);SetActive(pads,available && padsOn);
+            SetActive(runway,available && runwayOn);SetVisible(runwayBeacons,available && runwayOn);SetActive(taxi,available && taxiOn);SetActive(pads,available && padsOn);
             SetActive(hangarFixtures,available && hangarOn);
             bool pulse=!flashing || time%1.5f<1.1f;
             foreach(var pair in pairs)
@@ -364,24 +434,25 @@ namespace BoscaliAirfieldLighting
         private static void SetEnd(End e,bool landing,float outside,Vector3 eye,bool available,bool runwayOn,bool chaseOn,bool pulse,float time)
         {
             bool enabled=available && runwayOn;
-            e.green.enabled=enabled&&pulse&&landing;e.red.enabled=enabled&&pulse&&!landing;
-            e.greenBeacon.enabled=e.green.enabled;e.redBeacon.enabled=e.red.enabled;
+            SetVisible(e.green,enabled&&pulse&&landing);SetVisible(e.red,enabled&&pulse&&!landing);
+            SetVisible(e.greenBeacon,e.green.enabled);SetVisible(e.redBeacon,e.red.enabled);
             bool approach=enabled&&landing&&outside>=0f;
-            e.steady.enabled=approach;e.steadyBeacon.enabled=approach;
+            SetVisible(e.steady,approach);SetVisible(e.steadyBeacon,approach);
             // A short trailing pulse survives a 30 fps frame interval without
             // skipping rows, while preserving the two-per-second inward chase.
             float phase=Mathf.Repeat(time,.5f)*48f;
-            for(int i=0;i<e.flash.Length;i++){float age=Mathf.Repeat(phase-(23-i),24f);bool on=approach&&chaseOn&&age<2.4f;e.flash[i].enabled=on;e.flashBeacon[i].enabled=on;}
+            for(int i=0;i<e.flash.Length;i++){float age=Mathf.Repeat(phase-(23-i),24f);bool on=approach&&chaseOn&&age<2.4f;SetVisible(e.flash[i],on);SetVisible(e.flashBeacon[i],on);}
             Vector3 sight=eye-e.papiPosition;float along=Vector3.Dot(sight,e.outward);
             float angle=Mathf.Atan2(sight.y,Mathf.Max(.01f,along))*Mathf.Rad2Deg;
             for(int i=0;i<4;i++)
             {
                 float cutoff=i==0?2.5f:i==1?2.833333f:i==2?3.166667f:3.5f;
                 bool white=approach&&along>0f&&angle>=cutoff;bool red=approach&&along>0f&&!white;
-                e.papiWhite[i].enabled=white;e.papiWhiteBeacon[i].enabled=white;e.papiRed[i].enabled=red;e.papiRedBeacon[i].enabled=red;
+                SetVisible(e.papiWhite[i],white);SetVisible(e.papiWhiteBeacon[i],white);SetVisible(e.papiRed[i],red);SetVisible(e.papiRedBeacon[i],red);
             }
         }
         private static void SetActive(GameObject value,bool active){if(value.activeSelf!=active)value.SetActive(active);}
+        private static void SetVisible(Renderer value,bool visible){if(value!=null && value.enabled!=visible)value.enabled=visible;}
         public void Dispose(){if(root!=null)UnityEngine.Object.Destroy(root);}
         private sealed class End{internal Vector3 position,outward,papiPosition;internal MeshRenderer green,red,steady;internal ParticleSystemRenderer greenBeacon,redBeacon,steadyBeacon;internal MeshRenderer[] flash,papiWhite,papiRed;internal ParticleSystemRenderer[] flashBeacon,papiWhiteBeacon,papiRedBeacon;}
         private sealed class RunwayPair{internal End first,second;internal bool initialized,firstActive;}

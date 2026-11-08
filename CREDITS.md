@@ -34,6 +34,8 @@ KROP's NVG effects, nuclear flash effects and added sound-propagation delay are 
 - The unified FX and MET OFFICE interface, MFD integration, DOORMAN metadata and optional NOAtmoFX bridge.
 - Runway, taxiway, hangar, helipad, industrial and port lighting, including five-light chasing approach rows and approximate PAPI indicators. The row-wide chase is an artistic adaptation of approach lighting, not the individual-flasher pattern of an FAA ALSF-2 installation.
 - Street-light tuning, weather and water fixes, canopy compatibility work, effect controls and the integration and bug fixes described above.
+- Ground placement and pavement-end detection for the added runway fixtures; native edge lights are retained, ambiguous placements omitted, and lighting resources released on disable.
+- The optional add-on startup helper and NOAtmoFX 1.4 API controls, multiplayer edits without writing the add-on config and protection against saving host settings into local configuration. The standalone add-on renderer remains Paul Leonard's work.
 
 ## Other authors and assets
 
