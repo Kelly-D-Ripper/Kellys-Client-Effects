@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AssemblyName>BoscaliUnifiedWeather</AssemblyName>
     <RootNamespace>BoscaliUnifiedWeather</RootNamespace>
-    <Version>0.8.1</Version>
+    <Version>0.8.3</Version>
     <Deterministic>true</Deterministic>
     <NuGetAudit>false</NuGetAudit>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -36,6 +36,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
+    <Compile Include="UnifiedEffects/**/*.cs" />
+    <EmbeddedResource Include="../Payloads/*.dll" LogicalName="UnifiedEffects.Modules.%(Filename)%(Extension)" />
     <Compile Include="WeatherNetDisabled.cs" />
     <Compile Include="ThunderImmediate.cs" />
     <Compile Include="Weather/**/*.cs" Exclude="Weather/Assets/**;Weather/WeatherModule.cs;Weather/Patches/**;Weather/Presentation/WeatherMfdPanel.cs;Weather/Runtime/WeatherAutomation.cs;Weather/Runtime/CloudMotionProbe.cs;Weather/Networking/WeatherNet.cs;Weather/Audio/ThunderSoundscape.cs;Weather/Visuals/WeatherVolumeDressing.cs;Weather/Visuals/WeatherCloudPass.cs;Weather/Visuals/WeatherCloudShadows.cs;Weather/Visuals/CloudProbePass.cs;Weather/Visuals/CloudVolumeUniforms.cs;Weather/Visuals/CloudMaps.cs;Weather/Visuals/CloudBodies.cs;Weather/Visuals/CloudLowRes.cs;Weather/Visuals/CloudNoise3D.cs" />

@@ -111,6 +111,26 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(6, "Toggle", Krop, "07 Cosmetic lifeboats", "Lifeboats", "Lifeboats from sinking ships"),
             new Item(6, "Toggle", Krop, "07 Cosmetic lifeboats", "Gentle bobbing", "Lifeboat bobbing"),
             new Item(6, "Toggle", Krop, "07 Cosmetic lifeboats", "Blinking beacons", "Lifeboat beacons"),
+            new Item(7, "Preset", NoAtmo, "Quality", "Preset", "Quality preset"),
+            new Item(7, "Feature", NoAtmo, "", "Clouds", "Volumetric clouds"),
+            new Item(7, "Feature", NoAtmo, "", "Shadows", "Cloud shadows"),
+            new Item(7, "Feature", NoAtmo, "", "RainShafts", "Distant rain curtains"),
+            new Item(7, "Feature", NoAtmo, "", "NearRain", "Rain near camera"),
+            new Item(7, "Feature", NoAtmo, "", "Lightning", "NOAtmoFX lightning"),
+            new Item(7, "Feature", NoAtmo, "", "Turbulence", "NOAtmoFX turbulence"),
+            new Item(7, "Feature", NoAtmo, "", "GodRays", "Sun rays"),
+            new Item(7, "Feature", NoAtmo, "", "LightShafts", "Light shafts"),
+            new Item(7, "Feature", NoAtmo, "", "Fog", "NOAtmoFX fog"),
+            new Item(7, "Feature", NoAtmo, "", "WetGlass", "NOAtmoFX wet glass"),
+            new Item(7, "Feature", NoAtmo, "", "NuclearClouds", "Nuclear cloud effects"),
+            new Item(7, "Feature", NoAtmo, "", "KeepSun", "Keep sun below clouds"),
+            new Item(7, "Feature", NoAtmo, "", "Rainbow", "Rainbow"),
+            new Item(7, "Feature", NoAtmo, "", "Glory", "Glory"),
+            new Item(7, "Feature", NoAtmo, "", "ValleyFog", "Valley fog"),
+            new Item(7, "Feature", NoAtmo, "", "MountainCloud", "Mountain clouds"),
+            new Item(7, "Toggle", NoAtmo, "Integration", "FollowBoscaliWeather", "Follow Boscali weather"),
+            new Item(7, "Toggle", NoAtmo, "Integration", "YieldToBoscali", "Yield rain/fog to Boscali"),
+            new Item(7, "Slider", NoAtmo, "Weather", "ChangeTime", "Cloud transition minutes", 1f, 30f),
             new Item(7, "Toggle", NoAtmo, "Weather", "OwnCirrus", "NOAtmoFX cirrus"),
             new Item(7, "Slider", NoAtmo, "Weather", "Cirrus", "Cirrus amount", 0f, 2f),
             new Item(7, "Slider", NoAtmo, "Weather", "MidLevel", "Mid-level clouds", 0f, 2f),
@@ -129,8 +149,6 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(7, "Slider", NoAtmo, "Storm", "Anvil", "Anvil width", 0f, .8f),
             new Item(7, "Slider", NoAtmo, "Storm", "Supercells", "Supercell chance", 0f, 1f),
             new Item(7, "Slider", NoAtmo, "Lighting", "WetDarkening", "Rain cloud darkening", 0f, 2f),
-            new Item(7, "Toggle", NoAtmo, "Shadows", "Shadows", "Cloud shadows"),
-            new Item(7, "Toggle", NoAtmo, "Atmosphere", "RainShafts", "Distant rain curtains"),
             new Item(7, "Slider", NoAtmo, "Atmosphere", "Lightning", "NOAtmoFX lightning", 0f, 3f),
             new Item(7, "Slider", NoAtmo, "Atmosphere", "GodRays", "Sun rays", 0f, 1.5f),
             new Item(7, "Slider", NoAtmo, "Atmosphere", "LightShafts", "Light shafts", 0f, 2f),
@@ -190,6 +208,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         }
         internal void Refresh()
         {
+            if(cloudOnly)hint.text=CloudModeCoordinator.Live?.HostOwnsWeather==true?"HOST WEATHER / LOCAL CHANGES THIS SESSION":CloudModeCoordinator.Live?.SessionOnly==true?"MULTIPLAYER / LOCAL CHANGES THIS SESSION":"NOATMOFX CLOUDS / ATMOSPHERE";
             visible.Clear();foreach(var x in Items)if(x.category==category)visible.Add(x);
             int pages=Math.Max(1,(visible.Count+PageSize-1)/PageSize);page=Mathf.Clamp(page,0,pages-1);
             for(int i=0;i<categories.Length;i++) label(categories[i],Names[i],i==category,true);
@@ -198,15 +217,22 @@ namespace BoscaliSummer.Modules.Weather.Presentation
                 int ix=page*PageSize+i;bool exists=ix<visible.Count;
                 if(rows[i].gameObject.activeSelf!=exists)rows[i].gameObject.SetActive(exists);
                 if(!exists){if(minus[i].gameObject.activeSelf)minus[i].gameObject.SetActive(false);if(plus[i].gameObject.activeSelf)plus[i].gameObject.SetActive(false);continue;}
-                Item item=visible[ix];ConfigEntryBase entry=Find(item);bool usable=entry!=null;
-                string value="UNAVAILABLE";
-                if(usable && item.kind=="Toggle" && entry.BoxedValue is bool b)value=b?"[ X ]":"[   ]";
+                Item item=visible[ix];ConfigEntryBase entry=Find(item);var api=CloudModeCoordinator.Live;
+                bool feature=item.kind=="Feature",preset=item.kind=="Preset";
+                bool usable=feature || preset ? api!=null && api.AddonReady : entry!=null;
+                bool hostLocked=item.category==7 && api!=null && api.HostOwnsWeather && !api.CanEdit(item.section,item.key);
+                if(item.category==7)usable=usable && api!=null && api.CanEdit(item.section,item.key);
+                string value=hostLocked?"HOST CONTROLLED":"UNAVAILABLE";
+                if(usable && feature)value=api.Feature(item.key)?"[ X ]":"[   ]";
+                else if(usable && preset)value=api.CurrentPreset.ToUpperInvariant();
+                else if(usable && item.kind=="Toggle" && entry.BoxedValue is bool b)value=b?"[ X ]":"[   ]";
                 else if(usable && item.kind=="Slider" && entry.BoxedValue is float f)value=f.ToString("0.00");
-                else if(usable && item.kind=="Front" && entry.BoxedValue is int front)value=front>=0 && front<4?new[]{"NONE","COLD","WARM","AUTO"}[front]:"--";
+                else if(usable && item.kind=="Front" && entry.BoxedValue is int front)value=front>=0 && front<=3?new[]{"NONE","COLD","WARM","AUTO"}[front]:"--";
                 else if(usable && item.kind=="Downscale" && entry.BoxedValue is int down)value=down.ToString()+"X";
                 else if(usable && item.kind=="EnumChoice")value=entry.BoxedValue?.ToString()??"--";
-                label(rows[i],value+"   "+item.label,usable && item.kind=="Toggle" && entry.BoxedValue is bool v && v,usable);
-                bool adjustable=item.kind!="Toggle";
+                bool selected=usable && (feature ? api.Feature(item.key) : item.kind=="Toggle" && entry.BoxedValue is bool v && v);
+                label(rows[i],value+"   "+item.label,selected,usable);
+                bool adjustable=item.kind!="Toggle" && !feature;
                 var rowRect=(RectTransform)rows[i].transform;float rowWidth=adjustable?350f:448f;
                 if(!Mathf.Approximately(rowRect.sizeDelta.x,rowWidth))rowRect.sizeDelta=new Vector2(rowWidth,rowRect.sizeDelta.y);
                 var rowLabel=rows[i].GetComponentInChildren<TMP_Text>(true);if(rowLabel!=null){rowLabel.alignment=TextAlignmentOptions.MidlineLeft;rowLabel.margin=new Vector4(8f,0f,8f,0f);}
@@ -219,13 +245,26 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         }
         private void Change(int row,int direction)
         {
-            int ix=page*PageSize+row;if(ix>=visible.Count)return;Item item=visible[ix];var entry=Find(item);if(entry==null)return;
+            int ix=page*PageSize+row;if(ix>=visible.Count)return;Item item=visible[ix];var api=CloudModeCoordinator.Live;
+            if(item.category==7 && (api==null || !api.CanEdit(item.section,item.key)))return;
+            if(item.kind=="Feature"){api?.ToggleFeature(item.key);Refresh();return;}
+            if(item.kind=="Preset")
+            {
+                if(api!=null && api.AddonReady && direction!=0){var values=api.Presets;int current=Array.IndexOf(values,api.CurrentPreset);if(values.Length>0){int next=current<0?(direction>0?0:values.Length-1):(current+direction+values.Length)%values.Length;api.Preset(values[next]);}}
+                Refresh();return;
+            }
+            var entry=Find(item);if(entry==null)return;
+            var config=item.category==7?EffectsSettingsCache.Get(NoAtmo):null;
+            bool temporary=config!=null && api.SessionOnly,save= config!=null && config.SaveOnConfigSet;
+            if(temporary)config.SaveOnConfigSet=false;
+            try {
             if(item.kind=="Toggle" && entry.BoxedValue is bool b)entry.BoxedValue=!b;
             else if(item.kind=="Slider" && direction!=0 && entry.BoxedValue is float f)entry.BoxedValue=Mathf.Clamp(f+direction*(item.max-item.min)/20f,item.min,item.max);
             else if(item.kind=="Front" && direction!=0 && entry.BoxedValue is int front)entry.BoxedValue=(front+direction+4)%4;
-            else if(item.kind=="Downscale" && direction!=0 && entry.BoxedValue is int down){int[] values={1,2,4};int current=Array.IndexOf(values,down);entry.BoxedValue=values[(Mathf.Max(0,current)+direction+values.Length)%values.Length];}
+            else if(item.kind=="Downscale" && direction!=0 && entry.BoxedValue is int down){int[] values={1,2,3,4};int current=Array.IndexOf(values,down);entry.BoxedValue=values[(Mathf.Max(0,current)+direction+values.Length)%values.Length];}
             else if(item.kind=="EnumChoice" && direction!=0 && entry.SettingType.IsEnum)
             {var values=Enum.GetValues(entry.SettingType);int index=Array.IndexOf(values,entry.BoxedValue);entry.BoxedValue=values.GetValue((index+direction+values.Length)%values.Length);}
+            } finally {if(temporary)config.SaveOnConfigSet=save;}
             Refresh();
         }
     }

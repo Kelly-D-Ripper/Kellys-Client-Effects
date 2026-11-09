@@ -14,9 +14,10 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         private static readonly Dictionary<string,ConfigFile> Configs=new Dictionary<string,ConfigFile>();
         private static readonly string[] Ids={"aaron.boscali.unified","aaron.boscali.krop-unified","aaron.boscali.betternight","aaron.boscali.weather-unified","aaron.boscali.missile-unified","aaron.boscali.cockpit-audio","aaron.boscali.cockpitfeel","aaron.boscali.airfield-lighting"};
         private float next;
+        private static bool complete;
         private static MethodInfo bridge;
         internal static void Register(string id,ConfigFile config){if(config!=null)Configs[id]=config;}
-        private void Update(){if(Configs.Count>=Ids.Length || Time.unscaledTime<next)return;next=Time.unscaledTime+1f;Capture();}
+        private void Update(){if(complete || Time.unscaledTime<next)return;next=Time.unscaledTime+1f;Capture();}
         internal static void Capture()
         {
             if(bridge==null)foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -27,9 +28,10 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             foreach(string id in Ids)
             {
                 if(Configs.ContainsKey(id))continue;
-                if(Chainloader.PluginInfos.TryGetValue(id,out var info) && info.Instance!=null)Configs[id]=info.Instance.Config;
+                if(UnifiedEffects.ModuleRegistry.GetPluginInfos().TryGetValue(id,out var info) && info.Instance!=null)Configs[id]=info.Instance.Config;
                 else if(bridge!=null && bridge.Invoke(null,new object[]{id}) is ConfigFile config)Configs[id]=config;
             }
+            complete=true;foreach(string id in Ids)if(!Configs.ContainsKey(id)){complete=false;break;}
         }
         internal static ConfigFile Get(string id){Configs.TryGetValue(id,out var value);return value;}
     }
