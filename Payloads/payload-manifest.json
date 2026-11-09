@@ -1,0 +1,84 @@
+{
+  "baseline": "KellysClientEffects-v0.8.2-CLIENT.zip",
+  "baselineSha256": "2E32299574AD599BBB01A7966D965D069FDDDF7B15676C8235AA01570C9BFC5F",
+  "rootAssembly": "BoscaliUnifiedWeather",
+  "rootAssemblyVersion": "0.8.3.0",
+  "privateRegistry": "UnifiedEffects.ModuleRegistry.GetPluginInfos",
+  "bundleResource": "UnifiedEffects.realisticnight_fx",
+  "bundleSha256": "41452C227EB602734F9797F7EDBA998DAABDB681E3D3395A761BED49CB189417",
+  "bundleBytes": 10229,
+  "modules": [
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/Core/BoscaliUnified.dll",
+      "output": "BoscaliUnified.dll",
+      "originalSha256": "F0A0A59F3FDCCF174DEA620B6CD1C57A20A03313E6AEE703B65D0C5D686A42B2",
+      "preparedSha256": "5D0FD35B7A3D4D87C74E8812FCDCC96FCE4FAEE426A89F96B2CF6926821BA29A",
+      "bytes": 2792960,
+      "changes": [
+        "System.Void BoscaliSummer.Modules.Immersion.Runtime.CockpitPilot::LateUpdate() - registry getter calls: 1",
+        "System.Void BoscaliClientExperimental.Immersion.ImmersionRuntime::Update() - registry getter calls: 3"
+      ]
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/KROP/KROP.UnifiedEffects.dll",
+      "output": "KROP.UnifiedEffects.dll",
+      "originalSha256": "2CCAB4D85F6BEE95D4FDC0F96A1E7FE97CC09DCBC4AF7B14E3EB1976BF4301D8",
+      "preparedSha256": "2CCAB4D85F6BEE95D4FDC0F96A1E7FE97CC09DCBC4AF7B14E3EB1976BF4301D8",
+      "bytes": 5522944,
+      "changes": []
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/Lighting/RealisticNight.Unified.dll",
+      "output": "RealisticNight.Unified.dll",
+      "originalSha256": "E78780717FBBDFBD20365E13AB7B9FC7DA3B1D2FEC342CE247F5C80311A46FA9",
+      "preparedSha256": "513EFE5FC5F492FD901781B59E8B21ACC4152D42547F13539CE4368EB3AF082E",
+      "bytes": 64512,
+      "changes": [
+        "System.Void RealisticNight.StreetLightFX::EnsureLoaded() - load pinned embedded bundle instead of Assembly.Location",
+        "UnityEngine.AssetBundle RealisticNight.StreetLightFX::LoadUnifiedEmbeddedBundle() - resource reader with finally cleanup"
+      ]
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/Lighting/Boscali.AirfieldLighting.dll",
+      "output": "Boscali.AirfieldLighting.dll",
+      "originalSha256": "E5C12046D086162F0F7B0AE39340111F287F623D56D83C3D0759E4A1E8DBA066",
+      "preparedSha256": "E5C12046D086162F0F7B0AE39340111F287F623D56D83C3D0759E4A1E8DBA066",
+      "bytes": 34304,
+      "changes": []
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/CockpitAudio/Boscali.CockpitAudio.dll",
+      "output": "Boscali.CockpitAudio.dll",
+      "originalSha256": "4FEE728682A780FD925F767638AB302B1FA3EF75DF052B4966E56BC9E55E6C6A",
+      "preparedSha256": "4FEE728682A780FD925F767638AB302B1FA3EF75DF052B4966E56BC9E55E6C6A",
+      "bytes": 680448,
+      "changes": []
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/CockpitFeel/Boscali.CockpitFeel.dll",
+      "output": "Boscali.CockpitFeel.dll",
+      "originalSha256": "E10C60BFF8F4B3334D99431A32C08502685DF6AE1E5749479EA35E4BDE1143FB",
+      "preparedSha256": "E10C60BFF8F4B3334D99431A32C08502685DF6AE1E5749479EA35E4BDE1143FB",
+      "bytes": 31744,
+      "changes": []
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/Missile/Boscali.UnifiedMissileBoom.dll",
+      "output": "Boscali.UnifiedMissileBoom.dll",
+      "originalSha256": "1CA7AE7A412ED41E649DFEE345DE0579368AE79B2E850E57232D239F819E88AA",
+      "preparedSha256": "1CA7AE7A412ED41E649DFEE345DE0579368AE79B2E850E57232D239F819E88AA",
+      "bytes": 10752,
+      "changes": []
+    },
+    {
+      "input": "BepInEx/plugins/UnifiedEffects/Controls/ClientEffectsControlPanel.dll",
+      "output": "ClientEffectsControlPanel.dll",
+      "originalSha256": "6B546442739EF7ED46860E1FA3FA685CB69A6A2A287C7A3B4E933CEC34C374F4",
+      "preparedSha256": "CE3338C4246F8F03E8CA14ED31898D772686803A4E5FFB2DCA7DDBF300CCEF3E",
+      "bytes": 25088,
+      "changes": [
+        "System.Void ClientEffectsControlPanel.Panel::CaptureAvailable() - registry getter calls: 1"
+      ]
+    }
+  ]
+}

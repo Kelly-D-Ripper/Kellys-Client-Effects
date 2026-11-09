@@ -28,7 +28,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             foreach(string id in Ids)
             {
                 if(Configs.ContainsKey(id))continue;
-                if(Chainloader.PluginInfos.TryGetValue(id,out var info) && info.Instance!=null)Configs[id]=info.Instance.Config;
+                if(UnifiedEffects.ModuleRegistry.GetPluginInfos().TryGetValue(id,out var info) && info.Instance!=null)Configs[id]=info.Instance.Config;
                 else if(bridge!=null && bridge.Invoke(null,new object[]{id}) is ConfigFile config)Configs[id]=config;
             }
             complete=true;foreach(string id in Ids)if(!Configs.ContainsKey(id)){complete=false;break;}

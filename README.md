@@ -1,37 +1,36 @@
-# Client Effects & Weather 0.8.2
+# Client Effects & Weather 0.8.3 - single-plugin candidate
 
-Nuclear Option still isn't wet or noisy enough.
+One effects entry. The mod menu can stop looking like a shopping receipt.
 
-Weather, cockpit immersion, ocean effects, lights, trails and other shiny distractions. **Pre-release:** if something looks cursed, tell us which aircraft, map and switches did it.
+The complete 0.8.2 effects pack, including grounded runway lighting and NOAtmoFX 1.4 support, now lives in one main DLL. Its eight supporting modules and night-lighting asset are embedded inside it. DOORMAN sees one Client Effects & Weather entry without needing special grouping code.
 
-## Install
+## Upgrade
 
-Close the game. Install BepInEx, then extract this ZIP into your Nuclear Option folder. Keep the included `BepInEx/patchers` file as well as `BepInEx/plugins`. Use one copy of the pack and preserve your existing configuration files.
+1. Close Nuclear Option.
+2. Move the old `BepInEx/plugins/UnifiedEffects` folder somewhere outside `BepInEx/plugins` as a backup. Remove any duplicate older copies of the pack from other plugin folders too.
+3. Extract this ZIP into the game folder. Keep both its `plugins` and `patchers` files.
+4. Keep your existing `BepInEx/config` files. The original effect settings and shortcuts still work.
 
-Open **FX** on the map MFD, or **Ctrl + F8** for the effects panel. The weather page has a prominent Simple / Technical names selector. MET OFFICE weather and time changes are single-player only.
+Do not extract over the old multi-DLL pack and leave its components behind. The new plugin declares them incompatible to prevent duplicate effects.
 
-DOORMAN metadata is included; compatible DOORMAN builds show the pack as one entry. NOAtmoFX remains separate.
+The download contains:
 
-## What's changed
+- `BepInEx/plugins/UnifiedEffects/UnifiedEffects.dll` - the complete effects plugin.
+- `BepInEx/patchers/UnifiedEffectsStartup.dll` - the small early loader helper for optional NOAtmoFX lifetime protection. It is not a DOORMAN menu item.
+- This README, including credits and original licence notices below.
 
-- Runway-grounding fixes are now included. Native runway edge lights stay; the extra overlapping edges are gone. Added markers follow the ground, and red/green ends use detected pavement boundaries. Unsafe or ambiguous placements are omitted.
-- Lighting cleans up properly when disabled. Direction-changing approach rows, taxiways, hangars, helipads and site lighting remain toggleable.
-- The optional NOAtmoFX 1.4 integration has Vanilla / Enhanced / Volumetric modes, quality presets, feature switches and cloud transition timing.
-- The included startup helper keeps the optional add-on alive through scene changes, without needing DOORMAN to do it.
-- Our NOAtmoFX controls do not write its config while multiplayer is active. Host-controlled cloud shape and weather settings are read-only while following the host. Fixed a preset-save path that could save host settings into the player's own config.
+Open FX on the map MFD or press Ctrl + F8. The effects switches, MET OFFICE, Simple / Technical names and time controls are unchanged. Weather/time commands remain single-player only.
 
-## Optional volumetric clouds
+## NOAtmoFX is separate
 
-[Download NOAtmoFX 1.4.0 separately](https://github.com/paulleonard1314-lang/NoAtmoFX/releases/tag/1.4.0). It is **not included**. Install its matching DLL and `noatmofx` shader bundle together, then restart the game. Its author notes that upgrading to 1.4 resets its own settings to the new defaults once.
+[Download NOAtmoFX 1.4.0](https://github.com/paulleonard1314-lang/NoAtmoFX/releases/tag/1.4.0) separately and install its DLL and matching shader bundle together. It is not included here. Keep its folder when replacing Unified Effects.
 
-Choose **Volumetric** on our weather page. **Cloud Settings** exposes Low / Medium / High / Ultra quality, the individual effects and Boscali follow/yield settings. Clouds move gradually towards the selected weather; the default is ten minutes, adjustable under **Cloud transition minutes**. Fog and nearby rain yield to Boscali when the corresponding settings are enabled. Wet glass and lightning have their own switches if you want to avoid using both versions.
+The weather page still offers Vanilla / Enhanced / Volumetric and the add-on's quality and feature controls. NOAtmoFX remains its own DOORMAN entry. Its author documents a one-time defaults reset when upgrading the add-on to 1.4.
 
-The pack still remembers your own cloud-mode choice. Unsaved add-on changes remain in memory until changed or the game closes. The add-on controls its multiplayer synchronization. This does not make Boscali's MET OFFICE a multiplayer weather controller.
+## Candidate limits
 
-## Still a pre-release
+This is a packaging and startup change, not an FPS claim. Isolated mission tests exercise the effects, settings and the installed DOORMAN's actual inventory. Live multiplayer synchronization, sustained frame-time testing and human flight acceptance across every airfield remain open. The five-lamp approach chase and approximate PAPI are not a surveyed FAA installation.
 
-The merged pack has isolated mission and rendering checks. Live two-client weather sync, sustained frame-time testing and visual flight acceptance across every airfield remain open. The five-light approach chase is an artistic adaptation, not a claim of exact FAA ALSF-2 compliance.
-
-The included startup helper protects the shared BepInEx host only when both the Unified weather plugin and NOAtmoFX are discovered. It does not filter plugins or change their settings, and it does not run on headless servers.
+The pack does not add NVG changes or the general speed-of-sound delay. Cockpit voice warnings remain optional and default off for fresh settings.
 
 [Full credits and changes](CREDITS.md) | [Source notes](SOURCE-NOTES.md)

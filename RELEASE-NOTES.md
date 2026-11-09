@@ -1,10 +1,17 @@
-# Client Effects & Weather 0.8.2 - pre-release
+# Client Effects & Weather 0.8.3 - single-plugin candidate
 
-One pack. Fewer floating runway lights. Still plenty of switches to fiddle with instead of flying.
+One effects entry. The mod menu can stop looking like a shopping receipt.
 
 This is the combined build: runway-grounding corrections and NOAtmoFX 1.4 support are part of the main pack, not extra Unified Effects add-ons.
 
-## Fixes
+## Packaging update
+
+- One main effects DLL and one real DOORMAN entry. Eight supporting components and the night-lighting bundle are embedded.
+- Tested with the actual installed DOORMAN build, without its earlier custom grouping code.
+- Existing effect settings keep their original config files. NOAtmoFX remains separate.
+- The small early loader helper stays under BepInEx/patchers and is not a plugin-menu item.
+
+## Included fixes
 
 - Retained native runway edges and removed overlapping added edges.
 - Grounded added runway and approach fixtures, corrected runway-end placement from pavement boundaries, and omitted unsafe placements.
@@ -41,7 +48,7 @@ The pack includes its card and stays one entry in compatible DOORMAN builds. NOA
 
 ## Install and limits
 
-Close the game, then extract the client ZIP into the game directory, retaining both BepInEx/plugins and BepInEx/patchers. Keep existing configs and remove duplicate older copies of the pack.
+Close the game and move the old BepInEx/plugins/UnifiedEffects folder outside the plugins directory before extracting this ZIP. Remove duplicate older pack DLLs from other plugin folders. Retain both new BepInEx/plugins and BepInEx/patchers files. Keep existing configs and the separate NOAtmoFX folder.
 
 Pre-release. Live host/client sync, sustained performance and flight acceptance at every airfield are still open. Approach-row strobes are the requested five-lamp chase, not an exact FAA installation.
 
