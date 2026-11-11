@@ -2,7 +2,7 @@
   "baseline": "KellysClientEffects-v0.8.2-CLIENT.zip",
   "baselineSha256": "2E32299574AD599BBB01A7966D965D069FDDDF7B15676C8235AA01570C9BFC5F",
   "rootAssembly": "BoscaliUnifiedWeather",
-  "rootAssemblyVersion": "0.8.6.0",
+  "rootAssemblyVersion": "0.8.7.0",
   "privateRegistry": "UnifiedEffects.ModuleRegistry.GetPluginInfos",
   "bundleResource": "UnifiedEffects.realisticnight_fx",
   "bundleSha256": "41452C227EB602734F9797F7EDBA998DAABDB681E3D3395A761BED49CB189417",
@@ -12,10 +12,10 @@
       "input": "BepInEx/plugins/UnifiedEffects/Core/BoscaliUnified.dll",
       "output": "BoscaliUnified.dll",
       "originalSha256": "F0A0A59F3FDCCF174DEA620B6CD1C57A20A03313E6AEE703B65D0C5D686A42B2",
-      "preparedSha256": "BC3AE41B81775C377BB3F980A02A573DCEC418B91ACE331BAA0302FB1D5E5ACE",
+      "preparedSha256": "AC080A94E298EB3153206A2DBAF5B52046F86FA53668F3984E65ECD49B03C6AF",
       "bytes": 2794496,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 4B186C6A368623FD0078D2F5EB4DEF752DBEC14FBBBD0818BBD05761DF419F94",
+        "Rebuilt optional client-effects module; SHA256 99E9C60A310EB5D28FB7A86800E29243E960BBBCCCDA15C40A4AEF972E162B31",
         "System.Void BoscaliSummer.Modules.Immersion.Runtime.CockpitPilot::LateUpdate() - registry getter calls: 1",
         "System.Void BoscaliClientExperimental.Immersion.ImmersionRuntime::Update() - registry getter calls: 3"
       ]
@@ -24,10 +24,10 @@
       "input": "BepInEx/plugins/UnifiedEffects/KROP/KROP.UnifiedEffects.dll",
       "output": "KROP.UnifiedEffects.dll",
       "originalSha256": "2CCAB4D85F6BEE95D4FDC0F96A1E7FE97CC09DCBC4AF7B14E3EB1976BF4301D8",
-      "preparedSha256": "24CE57242E7AFA0237AC104124343C0A35B2615350675A44D86B0F71DD55F901",
+      "preparedSha256": "B50AF265D275E5195F006240666B0251394B6D7164F5626F9F91BA1C05CE2999",
       "bytes": 5588480,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 40A1942E63F61A3C0DDB3A064EEA160599C00B1B6A7382918B0018C045C4FF71"
+        "Rebuilt optional client-effects module; SHA256 F209D920D26D45B46983687BAD9A00652CC276964D8E61DBE9015ADBC2675B65"
       ]
     },
     {
@@ -53,40 +53,40 @@
       "input": "BepInEx/plugins/UnifiedEffects/CockpitAudio/Boscali.CockpitAudio.dll",
       "output": "Boscali.CockpitAudio.dll",
       "originalSha256": "4FEE728682A780FD925F767638AB302B1FA3EF75DF052B4966E56BC9E55E6C6A",
-      "preparedSha256": "C69D6E4F38B2714D6A56006D9849673BFEE45D79D28E78ABF6A4531A9BC28F5B",
+      "preparedSha256": "F90F43EA69DB6B54E9F30DB98F79B5C64698023281811E5ACE75E5D13B4C00B7",
       "bytes": 684032,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 BA64035FDF0EFF7B9D480A2B83C2C468402B63BDF7B12355AA4AF6885886DE5C"
+        "Rebuilt optional client-effects module; SHA256 1E9EDCB83E7BD0068200E85C2135130301EB22FDEE77A8FA6F436C33ACE3A6AE"
       ]
     },
     {
       "input": "BepInEx/plugins/UnifiedEffects/CockpitFeel/Boscali.CockpitFeel.dll",
       "output": "Boscali.CockpitFeel.dll",
       "originalSha256": "E10C60BFF8F4B3334D99431A32C08502685DF6AE1E5749479EA35E4BDE1143FB",
-      "preparedSha256": "6C279C9A638E6A55E7AAB454F248CB7BE4D03B82995464A768AAE87F524596DF",
+      "preparedSha256": "76572FFAB59B82A734236766A378AE435B32676362B54FD2B74A9CD2D1984779",
       "bytes": 33792,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 741E553AEC27E47FFAC853E1F497027217D286E39258A46EDF66ABAD2DD714EB"
+        "Rebuilt optional client-effects module; SHA256 D7FC04CA681485A5B3C85E6639986353B4904CEAC5099F64EC0C7B798589E7D7"
       ]
     },
     {
       "input": "BepInEx/plugins/UnifiedEffects/Missile/Boscali.UnifiedMissileBoom.dll",
       "output": "Boscali.UnifiedMissileBoom.dll",
       "originalSha256": "1CA7AE7A412ED41E649DFEE345DE0579368AE79B2E850E57232D239F819E88AA",
-      "preparedSha256": "48806F598EC53AACA7191A616461CFB90F2D43B2E7A5DD1EE3907227108A6623",
+      "preparedSha256": "1798F9CA99254C6299CDA8C21860A3BFD78BC0D4004BD501F4F3E7032F2DBFB9",
       "bytes": 419840,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 9FC0D5BC8419E2DDF6F154F67CA232D9B104B994E6D3DD75C738EA4142741F16"
+        "Rebuilt optional client-effects module; SHA256 D37699DD1B6767380212CE06F6A7F1408FB6B8D062A9EAAEA2F566E22A079E4B"
       ]
     },
     {
       "input": "BepInEx/plugins/UnifiedEffects/Controls/ClientEffectsControlPanel.dll",
       "output": "ClientEffectsControlPanel.dll",
       "originalSha256": "6B546442739EF7ED46860E1FA3FA685CB69A6A2A287C7A3B4E933CEC34C374F4",
-      "preparedSha256": "491E84CA41EE673770D16CF9EB7BCC228362ECBBBFDEDE04F40E4AA682D2A5D8",
-      "bytes": 39936,
+      "preparedSha256": "9BE6CE05FBF40CF35079C431772488AC4DBA9CE3AE4D5257393D0C720E5E6810",
+      "bytes": 40448,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 9299D3C7267FEB534AC36988461409B05E67D433CA6E884126B2A652570F70B9",
+        "Rebuilt optional client-effects module; SHA256 E3BB3891442F041933C9F2656603D46EF54CFAFD2ED85DE0C79C43AEC3C7D9DF",
         "System.Void ClientEffectsControlPanel.Panel::CaptureAvailable() - registry getter calls: 1"
       ]
     }

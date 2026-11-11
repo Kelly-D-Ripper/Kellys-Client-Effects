@@ -16,6 +16,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
     // detailed fronts chart; both surfaces use the same guarded weather adapter.
     internal sealed class MetOfficeMfdLauncher : MonoBehaviour, ISceneService
     {
+        internal static MetOfficeMfdLauncher Live;
         private readonly MfdPanelInstaller installer = new MfdPanelInstaller("FX", "FX", "EffectsWeather.Mfd", false) { Plate = true };
         private readonly MetOfficeModel model = new MetOfficeModel();
         private readonly Button[] classes = new Button[7], tiles = new Button[7], times = new Button[9];
@@ -27,7 +28,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         private WeatherSettings settings;
         private MetOfficeAdapter adapter;
         private TMP_Text status, clock,weatherHeading,timeHeading,weatherFooter;
-        private Button launch, simpleButton, technicalButton, auto, reroll;
+        private Button launch, simpleButton, technicalButton, auto, reroll, transition;
         private WeatherRegimeType browse;
         private bool touched;
         private float nextRefresh;
@@ -46,7 +47,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
 
         internal void Configure(WeatherSettings config, WeatherManager manager, ManualLogSource log)
         {
-            settings=config; weather=manager; adapter=new MetOfficeAdapter(manager);
+            settings=config; weather=manager; adapter=new MetOfficeAdapter(manager);Live=this;
             installer.Log=log; installer.Builder=Build;
         }
         private RectTransform Build(RectTransform root, float height)
@@ -89,10 +90,17 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             {
                 int index=i; tileSky[i]=-1;
                 tiles[i]=ButtonAt(root,"",16f+(i%2)*226f,(108f+(i/2)*49f)*sy,222f,42f*sy,()=>{
-                    if(tileSky[index]>=0 && adapter.PinSky(tileSky[index])) Refresh();
+                    if(tileSky[index]<0)return;
+                    var coordinator=CloudModeCoordinator.Live;
+                    if(coordinator?.Mode==CloudMode.Volumetric)coordinator.SelectWeather(tileSky[index]);
+                    else adapter.PinSky(tileSky[index]);
+                    Refresh();
                 });
             }
-            auto=ButtonAt(root,"MISSION WEATHER",242f,255f*sy,222f,42f*sy,()=>{adapter.PinSky(-1);Refresh();});
+            transition=ButtonAt(root,"",16,66*sy,448,30*sy,()=>{CloudModeCoordinator.Live?.CycleTransition();Refresh();});
+            auto=ButtonAt(root,"MISSION WEATHER",242f,255f*sy,222f,42f*sy,()=>{
+                if(CloudModeCoordinator.Live?.Mode==CloudMode.Volumetric)CloudModeCoordinator.Live.ResumeWeather();
+                else adapter.PinSky(-1);Refresh();});
             timeHeading=Text(root,"TIME OF DAY",16f,307f*sy,220f,25f*sy,AvTextRole.Micro);
             clock=Text(root,"--:--",255f,307f*sy,209f,25f*sy,AvTextRole.Head,TextAlignmentOptions.MidlineRight);
             palette.Secondary(status);palette.Secondary(clock);
@@ -102,7 +110,8 @@ namespace BoscaliSummer.Modules.Weather.Presentation
                 times[i]=ButtonAt(root,ClockNames[i],16f+(i%3)*151f,(338f+(i/3)*33f)*sy,146f,28f*sy,()=>{SetClock(index);Refresh();});
             }
             reroll=ButtonAt(root,"NEW CLOUD PATTERN",16f,445f*sy,218f,30f*sy,()=>{adapter.Reroll();Refresh();});
-            launch=ButtonAt(root,"DETAILED WEATHER",242f,445f*sy,222f,30f*sy,Open);
+            launch=ButtonAt(root,"DETAILED WEATHER",242f,445f*sy,222f,30f*sy,()=>{
+                if(CloudModeCoordinator.Live?.Mode==CloudMode.Volumetric){showCloudSettings=true;Refresh();}else Open();});
             weatherFooter=Text(root,"SINGLE-PLAYER WEATHER CONTROL",16f,480f*sy,448f,18f*sy,AvTextRole.Micro,TextAlignmentOptions.Center);
             RefreshTabs();
             return page;
@@ -124,6 +133,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             AvLay.Place((RectTransform)cloudBack.transform,16,contentHeight-36f,448,30);
             AvLay.Place(weatherHeading,16,4*sy,448,22*sy);AvLay.Place(status,16,28*sy,448,28*sy);
             for(int i=0;i<classes.Length;i++)AvLay.Place((RectTransform)classes[i].transform,16+i*64,66*sy,60,30*sy);
+            AvLay.Place((RectTransform)transition.transform,16,66*sy,448,30*sy);
             for(int i=0;i<tiles.Length;i++)AvLay.Place((RectTransform)tiles[i].transform,16+(i%2)*226,(108+(i/2)*49)*sy,222,42*sy);
             AvLay.Place((RectTransform)auto.transform,242,255*sy,222,42*sy);
             AvLay.Place(timeHeading,16,307*sy,220,25*sy);AvLay.Place(clock,255,307*sy,209,25*sy);
@@ -181,6 +191,19 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             }
         }
         private void Open() => BoscaliUnifiedWeather.WeatherUiBridge.OpenMetOffice();
+        internal bool IsWeatherPageOpen => installer.Screen!=null && installer.Screen.isActive && !showEffects;
+        internal void ToggleWeatherPage()
+        {
+            if(IsWeatherPageOpen){installer.Bezel?.onClick.Invoke();return;}
+            OpenWeatherPage();
+        }
+        internal bool OpenWeatherPage()
+        {
+            installer.Tick();if(installer.Screen==null || installer.Bezel==null || DynamicMap.i==null)return false;
+            DynamicMap.i.Maximize();showEffects=false;showCloudSettings=false;
+            if(!installer.Screen.isActive)installer.Bezel.onClick.Invoke();
+            RefreshTabs();return true;
+        }
         private void FitBesideBezel()
         {
             if(page==null || installer.Bezel==null || !(page.parent is RectTransform parent)) return;
@@ -228,22 +251,37 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             if(!touched && model.Captured) browse=model.Class;
             string name=model.SkyNumber>0 && simple ? SimpleWeatherNames.Get(model.SkyNumber-1) : model.SkyName;
             status.text=ready ? name.ToUpperInvariant()+"  ·  WIND "+model.WindFromDeg.ToString("000")+"° / "+Mathf.RoundToInt(model.WindMps)+" M/S" : "AVAILABLE IN SINGLE-PLAYER MISSIONS";
-            for(int i=0;i<classes.Length;i++) Label(classes[i],simple ? SimpleClasses[i] : MetCatalog.ClassWords[i],(int)browse==i,true);
+            for(int i=0;i<classes.Length;i++){classes[i].gameObject.SetActive(!volumetric);Label(classes[i],simple ? SimpleClasses[i] : MetCatalog.ClassWords[i],(int)browse==i,true);}
+            transition.gameObject.SetActive(volumetric);
+            if(volumetric)Label(transition,cloud.TransitionLabel,false,UnifiedEffects.NoAtmoWeatherTransition.Available && ready);
             Label(simpleButton,"SIMPLE ENGLISH",simple,true);
             Label(technicalButton,"TECHNICAL",!simple,true);
             int n=0;
-            for(int i=0;i<SkyLibrary.Count && n<tiles.Length;i++)
+            if(volumetric)
+            {
+                weatherHeading.text="VOLUMETRIC WEATHER";status.text=cloud.WeatherStatus;
+                for(int i=0;i<VolumetricWeatherProfiles.Count;i++)
+                {
+                    tileSky[n]=i;tiles[n].gameObject.SetActive(true);
+                    Label(tiles[n],VolumetricWeatherProfiles.Get(i).Name(simple),cloud.SelectedWeatherIndex==i,cloud.CanSelectWeather);n++;
+                }
+            }
+            else for(int i=0;i<SkyLibrary.Count && n<tiles.Length;i++)
             {
                 if(SkyLibrary.ClassOf(i)!=browse) continue;
                 SkyDef def=SkyLibrary.Get(i); tileSky[n]=i; tiles[n].gameObject.SetActive(true);
                 Label(tiles[n],(simple ? SimpleWeatherNames.Get(i) : def.Name)+"  #"+def.Number,i==model.PinnedSky,ready); n++;
             }
             for(int i=n;i<tiles.Length;i++) {tileSky[i]=-1; tiles[i].gameObject.SetActive(false);}
-            Label(auto,"MISSION WEATHER",model.PinnedSky<0 && !model.Forced,ready && (model.PinnedSky>=0 || model.Forced));
+            if(!volumetric)weatherHeading.text="CURRENT WEATHER";
+            Label(auto,"MISSION WEATHER",volumetric ? cloud.SelectedWeatherIndex<0 : model.PinnedSky<0 && !model.Forced,
+                volumetric ? cloud.CanSelectWeather : ready && (model.PinnedSky>=0 || model.Forced));
             if(clock!=null) clock.text=ready ? TimeOfDayMath.ClockText(model.TimeOfDayHours) : "--:--";
             for(int i=0;i<times.Length;i++)Label(times[i],ClockNames[i],false,ready && (i!=8 || model.TimeChanged));
+            reroll.gameObject.SetActive(!volumetric);
             Label(reroll,"NEW CLOUD PATTERN",false,ready);
-            Label(launch,"DETAILED WEATHER",false,ready);
+            Label(launch,volumetric?"CLOUD SETTINGS":"DETAILED WEATHER",false,volumetric?cloud.AddonReady:ready);
+            weatherFooter.text=volumetric?"SINGLE-PLAYER PRESETS / EFFECT SWITCHES STILL APPLY":"SINGLE-PLAYER WEATHER CONTROL";
         }
         private void Update()
         {
@@ -264,7 +302,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             }
         }
         public void ResetForScene() { palette.Reset();installer.Reset(); page=weatherPage=effectsPage=weatherContent=cloudPage=null;effects=cloudEffects=null;effectsTab=weatherTab=cloudButton=null;status=clock=cloudStatus=null;technicalButton=null; launch=simpleButton=auto=reroll=null;showCloudSettings=false;touched=false; nextRefresh=0f; }
-        private void OnDestroy()=>ResetForScene();
+        private void OnDestroy(){ResetForScene();if(Live==this)Live=null;}
     }
 
     // Thin framed buttons like the native AIRLIFT/MEDALS controls.  A separate

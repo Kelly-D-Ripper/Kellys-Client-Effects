@@ -1,4 +1,4 @@
-"""Seal the tested local 0.8.6 candidate; never install or publish it."""
+"""Seal the tested local 0.8.7 candidate; never install or publish it."""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +12,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "0.8.6"
+VERSION = "0.8.7"
 BASELINE = ROOT.parent / "SinglePluginCandidate/dist/KellysClientEffects-v0.8.3-CLIENT.zip"
 BASELINE_SHA = "CAA9E4AA43AEBEBBD9010651F9DA9919E1CB35948A3B50B71CEDFD3BE151BB02"
 STARTUP_SHA = "35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A"
@@ -63,6 +63,15 @@ def verify_run(directory: Path, payload: dict[str, bytes]) -> dict:
         require(len(menu["booleans"]) == menu["booleanCount"] and len(menu["mfdRows"]) == menu["mfdRowCount"], "Incomplete menu inventory")
         require(menu["rootSha256"].upper() == sha(payload[MAIN_NAME]), "Menu inventory uses a different main DLL")
     f1_path = directory / "BepInEx/plugins/Probe/f1-render-status.json"
+    transition_path = directory / "BepInEx/plugins/Probe/volumetric-weather-transitions.json"
+    transition = read_json(transition_path) if transition_path.exists() else None
+    if "plugins/NoAtmoFX/NoAtmoFX.dll" in recorded and not launch.get("disabledBoot", False):
+        require(transition is not None, "Missing volumetric weather regression evidence")
+        require(transition["configurationFilesUnchanged"] and transition["configurationsRestored"], "Weather regression did not preserve settings")
+        require([sample["selection"] for sample in transition["samples"]] == [0, 5, 0, 5], "Repeated weather changes not tested")
+        require(all(sample["source"] == "api" and 5 <= sample["gameSeconds"] < 5.5 and
+                    abs(sample["conditions"] - sample["targetConditions"]) < .06
+                    for sample in transition["samples"]), "Five-second cloud changes not verified")
     return {
         "directory": str(directory),
         "checks": checks,
@@ -77,6 +86,7 @@ def verify_run(directory: Path, payload: dict[str, bytes]) -> dict:
         "menuBooleans": menu["booleanCount"] if menu is not None else None,
         "menuRows": menu["mfdRowCount"] if menu is not None else None,
         "f1CustomDrawerRendering": read_json(f1_path) if f1_path.exists() else None,
+        "volumetricWeatherSha256": sha(transition_path.read_bytes()) if transition is not None else None,
         "protectedPlayerFiles": protected.get("checkedPlayerFiles"),
         "playerPrefsMatchBaseline": True,
         "playerFilesUnchanged": True,
@@ -178,15 +188,16 @@ def main() -> None:
         "installed": False,
         "published": False,
         "databaseImpact": "none",
-        "configurationImpact": "Additive child-effect switches default on beneath the unchanged master switches; ground-roll strength defaults to 1. Existing settings and optional NVG/audio defaults are retained. F1 metadata is transient; original config entries remain authoritative. No config files are included or overwritten.",
+        "configurationImpact": "Adds Weather display/Fast volumetric weather transitions (true) and Volumetric transition seconds (5). Existing settings retained. Direct cloud presets are session state; NOAtmoFX settings are not overwritten. No config files included.",
         "baseline": {"archive": BASELINE.name, "sha256": BASELINE_SHA},
-        "featureBaseline": {"version": "0.8.5", "sourceCommit": "dc1f01e5685929d61b117be5619119d0a7d94538"},
-        "sourceBranch": "codex/effect-toggle-audit-0.8.6",
+        "featureBaseline": {"version": "0.8.6", "sourceCommit": "3a962783e31da3c587e62f2282f35f1a3fe76c98"},
+        "sourceBranch": "codex/volumetric-weather-0.8.7",
         "sourceCommit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "sourceDirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()),
         "files": [{"path": name, "size": len(data), "sha256": sha(data)} for name, data in sorted(payload.items())],
         "missionTests": runs,
         "limits": [
+            "Fast cloud transitions and direct volumetric presets are verified for NOAtmoFX 1.4.0 in single player only. Wind drift keeps the add-on's own smoothing; feature switches and personal cloud-shape settings remain respected.",
             "F1 custom-drawer visible rendering remains OPEN when the hidden fixture receives no OnGUI events. Original config bindings, checkbox callbacks and real F1 menu discovery are tested separately.",
             "Visible ordinary-frame NVG auto-gain sampling remains open: hidden tests suppress normal camera rendering; actual URP render-request sampling and cleanup pass.",
             "Live multiplayer acceptance against an unmodified server/client remains open.",

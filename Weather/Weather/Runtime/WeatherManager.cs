@@ -51,7 +51,8 @@ namespace BoscaliSummer.Modules.Weather.Runtime
         private readonly PendingSync<WeatherSyncMessage> pendingSync = new PendingSync<WeatherSyncMessage>();
         private float lastTapeTime = -1f;
         internal bool IsCaptured => baselineCaptured && fieldKey != null;
-        internal bool IsConsoleOpen => console != null && console.IsOpen;
+        internal bool IsConsoleOpen => CloudModeCoordinator.Live?.Mode==CloudMode.Volumetric
+            ? MetOfficeMfdLauncher.Live?.IsWeatherPageOpen==true : console != null && console.IsOpen;
 
         // Baseline captured from the mission at scene start, restored at teardown
         private bool baselineCaptured;
@@ -163,7 +164,10 @@ namespace BoscaliSummer.Modules.Weather.Runtime
 
         internal static WeatherManager Live { get; private set; }
 
-        public float CurrentConditions => currentConditions;
+        // Integration readers need weather severity, not the capped native fog
+        // presentation value. NOAtmoFX already eases these targets itself.
+        public float CurrentConditions => IsEnabled && IsCaptured && Field != null
+            ? (IsExtremeStorm ? 1f : CurrentRegime.TargetConditions) : currentConditions;
         public float CurrentCloudHeight => currentCloudHeight;
         public Vector3 CurrentWindVelocity => currentWind;
         public float CurrentTurbulence => currentTurbulence;
@@ -217,6 +221,7 @@ namespace BoscaliSummer.Modules.Weather.Runtime
 
         public void ResetForScene()
         {
+            CloudModeCoordinator.Live?.ResetWeather();
             TimeOfDayControl.ResetForScene();
             extremeDressing.ReleaseFx();
             environmentSnapshot = default;
@@ -1647,6 +1652,11 @@ namespace BoscaliSummer.Modules.Weather.Runtime
 
         private void ToggleConsole()
         {
+            if(CloudModeCoordinator.Live?.Mode==CloudMode.Volumetric)
+            {
+                if(console!=null && console.IsOpen)console.Close();
+                MetOfficeMfdLauncher.Live?.ToggleWeatherPage();return;
+            }
             if (console != null && console.IsOpen) { console.Close(); return; }
             if (LevelInfo.i == null) return;
             if (console == null)

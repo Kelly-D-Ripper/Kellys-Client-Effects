@@ -1,9 +1,9 @@
-# Effect toggle audit - 0.8.6 candidate
+# Effect toggle audit - 0.8.7 candidate
 
 The exact loaded build was checked with Configuration Manager 19.1 and NOAtmoFX 1.4.0.
 
-- 180 bound Boolean settings accounted for: 159 mapped to effects/weather controls and 21 explicitly classified as policy, diagnostics, quality or inactive legacy settings.
-- 219 MFD controls inspected, including 176 effect/master/feature checkboxes. Every checkbox was reached through the actual MFD pages, clicked, checked against its original config entry or API, and restored.
+- 181 bound Boolean settings accounted for: 160 mapped to effects/weather controls and 21 explicitly classified as policy, diagnostics, quality or inactive legacy settings.
+- 221 MFD controls inspected, including 177 effect/master/feature checkboxes. Every checkbox was reached through the actual MFD pages, clicked, checked against its original config entry or API, and restored.
 - These are control counts, not a claim of that many distinct effects. Some shared master switches intentionally appear in more than one category.
 - F1 resolves the original config entries. Eight private modules are discoverable without creating extra DOORMAN entries. Ten numeric NOAtmoFX features have API-backed checkboxes alongside their strength controls.
 - Seven inactive legacy entries are hidden in F1; their saved values are retained.
@@ -15,6 +15,10 @@ Ground-roll camera vibration was already part of Cockpit shake, rather than a KR
 The isolated mission verified nonzero motion at takeoff speed reaching the actual camera pivot, strength scaling, immediate disable, stationary/airborne/external-camera suppression and restoration. This is camera movement, not hardware force feedback. The other player's exact aircraft/configuration has not been reproduced.
 
 ## Other repairs
+
+- Added optional fast volumetric weather transitions and a seconds control to MFD Cloud Settings and F1. The weather page also has a prominent duration button and seven direct NOAtmoFX weather presets.
+
+The 0.8.6 controls below are retained and rechecked:
 
 - Split cockpit recoil, touchdown/gear jolts and the two Mach effects into independent switches.
 - Split breathing, G strain, suit hiss, heartbeat, recovery, structural creaks, harness, impacts, gear lever and canopy closing into independent sound switches.
@@ -35,11 +39,11 @@ The hidden fixture verifies menu models, live callbacks, particle/audio cleanup 
 
 F1 custom-drawer rendering status: **OPEN**. Hidden isolated window received no OnGUI events in 120 frames. Discovery, configuration identity and checkbox callbacks were tested; visible F1 drawing still needs an interactive check. Recorded OnGUI events: 0; drawer invocations: 0. An OPEN result is not counted as a rendering pass.
 
-Tested main DLL SHA256: `2F28E55F2F98456F42EF72880E0E24C0BBA395A98C5B4F40D9AA227CC9C31A4A`.
+Tested main DLL SHA256: `C43AFDFC8ED07D6277B37CAD137DC36F6D5AF29290B3112F5D98D098968E4CA1`.
 
-Runtime evidence: `single-plugin-20261111T192051902Z`. Raw control/callback evidence is `BepInEx/plugins/Probe/effect-menu-coverage.json` in that run.
+Runtime evidence: `single-plugin-20261111T205852414Z`. Raw control/callback evidence is `BepInEx/plugins/Probe/effect-menu-coverage.json` in that run.
 
-Database impact: none. Configuration impact: additive child switches and one strength setting; no bundled configs, renamed keys or forced master changes. This candidate is packaged separately, not installed or published by this audit.
+Database impact: none. Configuration impact: adds the fast volumetric transition switch (on) and seconds control (5); retains existing child switches and strength settings. No bundled configs, renamed keys or forced master changes. This candidate is packaged separately, not installed or published by this audit.
 
 ## Complete control mapping
 
@@ -300,6 +304,8 @@ Numeric tuning and quality rows are included below as controls; they are not cou
 | Sun rays | Slider | Atmosphere / GodRays | Binding and reachable row |
 | Light shafts | Slider | Atmosphere / LightShafts | Binding and reachable row |
 | Render downscale | Downscale | Quality / Downscale | Binding and reachable row |
+| Quick volumetric weather transitions | Toggle | Weather display / Fast volumetric weather transitions | Clicked and restored |
+| Volumetric transition seconds | Slider | Weather display / Volumetric transition seconds | Binding and reachable row |
 | Clouds reflected in water and surfaces | Toggle | General / CloudsInReflections | Clicked and restored |
 | NOAtmoFX ocean lighting | Toggle | General / WaterLighting | Clicked and restored |
 | Cloud growth through the day | Toggle | Weather / DiurnalCycle | Clicked and restored |

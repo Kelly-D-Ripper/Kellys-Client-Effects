@@ -1,8 +1,20 @@
-# Client Effects & Weather 0.8.6 - candidate
+# Client Effects & Weather 0.8.7 - candidate
 
-More switches. Fewer effects hiding behind other bloody switches.
+Pick a storm. Get a storm. Preferably before the bloody flight ends.
 
-This candidate builds on 0.8.5, including the accessibility-colour repair, optional NVGs and sound travel. Open FX on the map MFD or press Ctrl + F8. If you use BepInEx Configuration Manager, its F1 menu now finds all eight internal modules without adding extra DOORMAN entries.
+Volumetric mode now has seven weather choices made for NOAtmoFX: Clear, Scattered, Thick Cloud, Low Cloud/Fog, Heavy Rain, Thunderstorm and Extreme Storm. Each sends actual cloud-model targets and selects matching Boscali precipitation. Enhanced mode keeps the full Boscali catalogue. Simple English and Technical names still work.
+
+Changes take about **five seconds** by default in single player. The prominent transition button cycles 5 / 15 / 60 / 600 seconds. F1 and Cloud Settings also have a duration slider and a switch to restore NOAtmoFX's own timing. The native weather cap is retained; NOAtmoFX receives separate storm severity instead of the weakened native-sky value.
+
+The fast transition adapter is checked against **NOAtmoFX 1.4.0**. It changes only the weather smoothing calculation for our single-player preset and a brief handoff back to mission weather. It does not replace the add-on DLL, save over its settings or change multiplayer timing. Cloud drift retains NOAtmoFX's own wind smoothing. Different add-on versions keep normal timing and disable unverified direct presets. An F11 weather override or another mod's active API weather is reported instead of silently fighting it.
+
+O opens the supported weather page while Volumetric is selected. The old Boscali-only cloud-pattern button is hidden in that mode. Returning to mission weather or changing providers releases our own cloud override.
+
+NOAtmoFX remains a **separate download**, not included here: [NOAtmoFX releases](https://github.com/paulleonard1314-lang/NoAtmoFX/releases).
+
+All 0.8.6 features below are retained.
+
+The retained 0.8.6 features build on 0.8.5, including the accessibility-colour repair, optional NVGs and sound travel. Open FX on the map MFD or press Ctrl + F8. If you use BepInEx Configuration Manager, its F1 menu finds all eight internal modules without adding extra DOORMAN entries.
 
 Ground-roll / takeoff vibration is under **FX > EFFECTS > COCKPIT**. Enable Cockpit shake and Ground-roll / takeoff vibration, then set the ground-roll strength to taste. F1 has the same settings under the Cockpit Feel module. It runs in the cockpit while moving on the ground and stops after takeoff; Comfort motion reduces it.
 

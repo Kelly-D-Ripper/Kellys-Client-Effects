@@ -20,6 +20,8 @@ namespace BoscaliSummer.Modules.Weather.Runtime
 
         public void OpenConsole()
         {
+            if(Presentation.CloudModeCoordinator.Live?.Mode==Presentation.CloudMode.Volumetric)
+            {Presentation.MetOfficeMfdLauncher.Live?.OpenWeatherPage();return;}
             if (console == null || !console.IsOpen) ToggleConsole();
         }
     }

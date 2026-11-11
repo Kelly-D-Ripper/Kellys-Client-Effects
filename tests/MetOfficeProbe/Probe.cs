@@ -967,6 +967,7 @@ public sealed partial class MetDriver : MonoBehaviour
                 Need((string)at.GetProperty("WeatherSource").GetValue(null)=="mission","turning follow off returns weather to mission");
                 follow.Value=true;await UniTask.Delay(800,ignoreTimeScale:true);
                 Need((string)at.GetProperty("WeatherSource").GetValue(null)=="boscali","turning follow on reacquires Boscali weather");
+                await TestVolumetricWeather(launcher,coord,manager);
                 Need((bool)select.Invoke(coord,new[]{Enum.ToObject(cloudEnum,1)}),"storm returns to enhanced mode");
             }
             clocks[6].onClick.Invoke();

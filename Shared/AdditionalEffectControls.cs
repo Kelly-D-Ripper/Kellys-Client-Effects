@@ -13,6 +13,8 @@ namespace UnifiedEffects.ControlsCatalog
     {
         private const string Weather="aaron.boscali.weather-unified",Feel="aaron.boscali.cockpitfeel",Audio="aaron.boscali.cockpit-audio",Core="aaron.boscali.unified",Atmo="paul.no.clouds";
         internal static readonly EffectControl[] Items={
+            new EffectControl(7,"Toggle",Weather,"Weather display","Fast volumetric weather transitions","Quick volumetric weather transitions"),
+            new EffectControl(7,"Slider",Weather,"Weather display","Volumetric transition seconds","Volumetric transition seconds",5f,1800f),
             new EffectControl(0,"Toggle",Weather,"Weather","SunDiscEnabled","Sun-disc colour and haze"),
             new EffectControl(0,"Toggle",Weather,"Weather","AuroraEnabled","Aurora (sky phenomena master)"),
             new EffectControl(0,"Toggle",Weather,"Weather","RedSpritesEnabled","Red sprites (sky phenomena master)"),

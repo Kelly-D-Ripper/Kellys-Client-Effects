@@ -42,6 +42,7 @@ KROP's ammunition, projectile, countermeasure-physics, AI-control and destructiv
 ## Kelly's additions and changes
 
 - The unified FX and MET OFFICE interface, MFD integration, DOORMAN metadata and optional NOAtmoFX bridge.
+- The 0.8.7 Volumetric weather presets, uncapped weather-severity export and guarded five-second transition adapter for NOAtmoFX 1.4.0. These are Kelly's integration changes; NOAtmoFX's cloud renderer remains Paul Leonard's work and a separate download.
 - Runway, taxiway, hangar, helipad, industrial and port lighting, including five-light chasing approach rows and approximate PAPI indicators. The row-wide chase is an artistic adaptation of approach lighting, not the individual-flasher pattern of an FAA ALSF-2 installation.
 - Street-light tuning, weather and water fixes, canopy compatibility work, effect controls and the integration and bug fixes described above.
 - Ground placement and pavement-end detection for the added runway fixtures; native edge lights are retained, ambiguous placements omitted, and lighting resources released on disable.

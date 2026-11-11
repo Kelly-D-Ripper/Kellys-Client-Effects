@@ -181,6 +181,8 @@ NOAtmoFX,NOAtmoFX lightning,Slider,paul.no.clouds,Atmosphere,Lightning,True,True
 NOAtmoFX,Sun rays,Slider,paul.no.clouds,Atmosphere,GodRays,True,True,numeric-or-choice-row-reachable
 NOAtmoFX,Light shafts,Slider,paul.no.clouds,Atmosphere,LightShafts,True,True,numeric-or-choice-row-reachable
 NOAtmoFX,Render downscale,Downscale,paul.no.clouds,Quality,Downscale,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Quick volumetric weather transitions,Toggle,aaron.boscali.weather-unified,Weather display,Fast volumetric weather transitions,True,True,clicked-and-restored
+NOAtmoFX,Volumetric transition seconds,Slider,aaron.boscali.weather-unified,Weather display,Volumetric transition seconds,True,True,numeric-or-choice-row-reachable
 Weather,Sun-disc colour and haze,Toggle,aaron.boscali.weather-unified,Weather,SunDiscEnabled,True,True,clicked-and-restored
 Weather,Aurora (sky phenomena master),Toggle,aaron.boscali.weather-unified,Weather,AuroraEnabled,True,True,clicked-and-restored
 Weather,Red sprites (sky phenomena master),Toggle,aaron.boscali.weather-unified,Weather,RedSpritesEnabled,True,True,clicked-and-restored

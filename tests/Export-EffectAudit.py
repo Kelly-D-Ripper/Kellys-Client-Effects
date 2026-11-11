@@ -34,7 +34,7 @@ def main():
             writer.writerow([CATEGORIES[row['category']], row['label'], row['kind'], row['owner'],
                 row['bindingSection'], row['bindingKey'], row['f1Visible'], row['reachable'], row['toggleStatus']])
     text = [
-        '# Effect toggle audit - 0.8.6 candidate', '',
+        '# Effect toggle audit - 0.8.7 candidate', '',
         f"The exact loaded build was checked with Configuration Manager {audit['f1Version']} and NOAtmoFX {audit['noAtmoVersion']}.", '',
         f"- {audit['booleanCount']} bound Boolean settings accounted for: {audit['mappedBooleanCount']} mapped to effects/weather controls and {audit['classifiedNonEffectCount']} explicitly classified as policy, diagnostics, quality or inactive legacy settings.",
         f'- {len(controls)} MFD controls inspected, including {len(toggles)} effect/master/feature checkboxes. Every checkbox was reached through the actual MFD pages, clicked, checked against its original config entry or API, and restored.',
@@ -45,6 +45,8 @@ def main():
         'Ground-roll camera vibration was already part of Cockpit shake, rather than a KROP feature. It now has its own switch and a 0-3 strength slider. Find it under FX > EFFECTS > COCKPIT or F1 > Cockpit Feel. Cockpit shake remains its master; Comfort motion reduces it. It requires the local cockpit view, movement above 2 m/s and near-ground radar altitude, then stops after takeoff.', '',
         'The isolated mission verified nonzero motion at takeoff speed reaching the actual camera pivot, strength scaling, immediate disable, stationary/airborne/external-camera suppression and restoration. This is camera movement, not hardware force feedback. The other player\'s exact aircraft/configuration has not been reproduced.', '',
         '## Other repairs', '',
+        '- Added optional fast volumetric weather transitions and a seconds control to MFD Cloud Settings and F1. The weather page also has a prominent duration button and seven direct NOAtmoFX weather presets.',
+        '', 'The 0.8.6 controls below are retained and rechecked:', '',
         '- Split cockpit recoil, touchdown/gear jolts and the two Mach effects into independent switches.',
         '- Split breathing, G strain, suit hiss, heartbeat, recovery, structural creaks, harness, impacts, gear lever and canopy closing into independent sound switches.',
         '- Added separate switches for all four added voice warnings. Disabling Pull Up no longer masks an enabled Terrain warning.',
@@ -59,7 +61,7 @@ def main():
         f"F1 custom-drawer rendering status: **{f1_render['status']}**. {f1_render.get('reason', '')} Recorded OnGUI events: {f1_render['onGuiEvents']}; drawer invocations: {f1_render['drawerInvocations']}. An OPEN result is not counted as a rendering pass.", '',
         f'Tested main DLL SHA256: `{digest}`.', '',
         f'Runtime evidence: `{args.run.name}`. Raw control/callback evidence is `BepInEx/plugins/Probe/effect-menu-coverage.json` in that run.', '',
-        'Database impact: none. Configuration impact: additive child switches and one strength setting; no bundled configs, renamed keys or forced master changes. This candidate is packaged separately, not installed or published by this audit.', '',
+        'Database impact: none. Configuration impact: adds the fast volumetric transition switch (on) and seconds control (5); retains existing child switches and strength settings. No bundled configs, renamed keys or forced master changes. This candidate is packaged separately, not installed or published by this audit.', '',
         '## Complete control mapping', '',
         'Numeric tuning and quality rows are included below as controls; they are not counted as separate visual effects. F1 section/key refers to the original owner listed in the CSV. The Simple/Technical weather-name toggle also exists on the weather page and in F1 under MET OFFICE.', '',
     ]
