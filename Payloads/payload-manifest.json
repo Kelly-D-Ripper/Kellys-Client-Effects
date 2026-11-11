@@ -23,10 +23,10 @@
       "input": "BepInEx/plugins/UnifiedEffects/KROP/KROP.UnifiedEffects.dll",
       "output": "KROP.UnifiedEffects.dll",
       "originalSha256": "2CCAB4D85F6BEE95D4FDC0F96A1E7FE97CC09DCBC4AF7B14E3EB1976BF4301D8",
-      "preparedSha256": "567C88AB4C9DE0EC5342C14A9BF0C40D3585E15C0512EF0F5A799B632838C6F9",
+      "preparedSha256": "1A7E5CF1F36C66609337CE8C2D8EB3195A407584220B589E4D124DBD33786FC7",
       "bytes": 5588480,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 5E4676CF07CD166D5A1999ED846AAD007B04536CB7A9946E16F7EC9BE53DB671"
+        "Rebuilt optional client-effects module; SHA256 BF449F8D45A45022903CEBC41718567D96A3BD2AEA74794D2E197FA036534979"
       ]
     },
     {
@@ -68,20 +68,20 @@
       "input": "BepInEx/plugins/UnifiedEffects/Missile/Boscali.UnifiedMissileBoom.dll",
       "output": "Boscali.UnifiedMissileBoom.dll",
       "originalSha256": "1CA7AE7A412ED41E649DFEE345DE0579368AE79B2E850E57232D239F819E88AA",
-      "preparedSha256": "7059316865F51C078194366C78EB6B0112B744618B448AFEF8D71B692E015F3E",
+      "preparedSha256": "00205B015563E87D546713EE0A89C6230CFA91740216E56D8543CED77EF3A8CE",
       "bytes": 419840,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 D91C5F8C57DDC73C2D16904AC00C4F6B83A28BF225073823F4085ECA4E19ED7B"
+        "Rebuilt optional client-effects module; SHA256 04DC0F004D5ACE8A3B36FCBBEE5D9D7EA880F755E734AACC209913C81A11AC85"
       ]
     },
     {
       "input": "BepInEx/plugins/UnifiedEffects/Controls/ClientEffectsControlPanel.dll",
       "output": "ClientEffectsControlPanel.dll",
       "originalSha256": "6B546442739EF7ED46860E1FA3FA685CB69A6A2A287C7A3B4E933CEC34C374F4",
-      "preparedSha256": "0210ED210C208BF55089D05E1621B900F5DD02D934CECF8FD8F446AC078A6B8C",
+      "preparedSha256": "841B0253B2BF9B823427D175861CFC503FF4D7EB0B6BE79FBD774264F15EF5A9",
       "bytes": 33792,
       "changes": [
-        "Rebuilt optional client-effects module; SHA256 5C6B3F87637AA6E35620239CB2C65F5151869290FC0F348B052924F40F8C81B8",
+        "Rebuilt optional client-effects module; SHA256 194275A5E6C1D620B88DC3B5D324A02E69D3D8EC59B64117EB60C47CFC8DB301",
         "System.Void ClientEffectsControlPanel.Panel::CaptureAvailable() - registry getter calls: 1"
       ]
     }

@@ -2,7 +2,7 @@
   "plugin": "aaron.boscali.weather-unified",
   "name": "Client Effects & Weather",
   "author": "Kelly D Ripper and contributors",
-  "description": "Client-side weather, cockpit, ocean, audio, lighting and battlefield effects. Open FX on the map MFD. Weather controls are single-player only.",
+  "description": "Client-side weather, cockpit, ocean, audio, lighting and battlefield effects. Open FX on the map MFD. Weather controls are single-player only.\n\nIncompatible with standalone Boscali Summer and KROP. Their effects are already integrated into this pack. Disable their standalone plugins before enabling this pack; keep your existing configuration files.\n\nNOAtmoFX is a compatible optional bolt-on, downloaded separately.",
   "links": [
     {
       "label": "GitHub",
