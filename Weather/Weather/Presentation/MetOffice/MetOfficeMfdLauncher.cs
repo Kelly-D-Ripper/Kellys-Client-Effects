@@ -95,7 +95,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             auto=ButtonAt(root,"MISSION WEATHER",242f,255f*sy,222f,42f*sy,()=>{adapter.PinSky(-1);Refresh();});
             timeHeading=Text(root,"TIME OF DAY",16f,307f*sy,220f,25f*sy,AvTextRole.Micro);
             clock=Text(root,"--:--",255f,307f*sy,209f,25f*sy,AvTextRole.Head,TextAlignmentOptions.MidlineRight);
-            status.color=clock.color=palette.Blue;
+            palette.Secondary(status);palette.Secondary(clock);
             for(int i=0;i<times.Length;i++)
             {
                 int index=i;
@@ -152,7 +152,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             button.transition=Selectable.Transition.None;
             button.navigation=new Navigation{mode=Navigation.Mode.None}; button.onClick.AddListener(()=>action());
             AvLay.Place((RectTransform)go.transform,x,y,w,h);
-            var frame=go.AddComponent<MfdOutline>();frame.Build(palette.Border,palette.Selected);
+            var frame=go.AddComponent<MfdOutline>();frame.Build(palette.Border,palette.Selected);palette.Track(frame);
             var text=AvText.Make((RectTransform)go.transform,"Label",AvTextRole.Head,caption,TextAlignmentOptions.Center,true);
             AvLay.Fill(text.rectTransform); AvText.Fit(text,true);palette.Apply(text);
             return button;
@@ -251,7 +251,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             installer.Tick();
             if(installer.Screen==null || !installer.Screen.isActive) return;
             if(Time.unscaledTime<nextRefresh) return;
-            nextRefresh=Time.unscaledTime+.25f; if(showEffects)effects?.Refresh();else Refresh();
+            nextRefresh=Time.unscaledTime+.25f;palette.Refresh(); if(showEffects)effects?.Refresh();else Refresh();
         }
         private void LateUpdate()
         {
@@ -263,7 +263,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
                 FitBesideBezel();
             }
         }
-        public void ResetForScene() { installer.Reset(); page=weatherPage=effectsPage=weatherContent=cloudPage=null;effects=cloudEffects=null;effectsTab=weatherTab=cloudButton=null;status=clock=cloudStatus=null;technicalButton=null; launch=simpleButton=auto=reroll=null;showCloudSettings=false;touched=false; nextRefresh=0f; }
+        public void ResetForScene() { palette.Reset();installer.Reset(); page=weatherPage=effectsPage=weatherContent=cloudPage=null;effects=cloudEffects=null;effectsTab=weatherTab=cloudButton=null;status=clock=cloudStatus=null;technicalButton=null; launch=simpleButton=auto=reroll=null;showCloudSettings=false;touched=false; nextRefresh=0f; }
         private void OnDestroy()=>ResetForScene();
     }
 
@@ -273,9 +273,10 @@ namespace BoscaliSummer.Modules.Weather.Presentation
     {
         private readonly Image[] edges=new Image[4];
         private Color normal,active,disabled;
+        private bool selectedState,enabledState=true;
         internal void Build(Color border,Color selected)
         {
-            normal=border;active=selected;disabled=border;disabled.a*=.4f;
+            Recolor(border,selected);
             for(int i=0;i<edges.Length;i++)
             {
                 var go=new GameObject("Frame",typeof(RectTransform),typeof(CanvasRenderer),typeof(Image));
@@ -288,7 +289,12 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             }
             Set(false,true);
         }
+        internal void Recolor(Color border,Color selected)
+        {
+            normal=border;active=selected;disabled=border;disabled.a*=.4f;
+            Set(selectedState,enabledState);
+        }
         internal void Set(bool selected,bool enabled)
-        {var c=enabled?(selected?active:normal):disabled;foreach(var edge in edges)if(edge!=null && edge.color!=c)edge.color=c;}
+        {selectedState=selected;enabledState=enabled;var c=enabled?(selected?active:normal):disabled;foreach(var edge in edges)if(edge!=null && edge.color!=c)edge.color=c;}
     }
 }

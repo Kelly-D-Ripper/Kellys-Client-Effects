@@ -750,6 +750,7 @@ public sealed partial class MetDriver : MonoBehaviour
             bezel.onClick.Invoke();
             Need(((MFDScreen)Field(installer,"Screen")).isActive,"native right-hand MET button opens its screen");
             Need(((RectTransform)Field(launcher,"effectsPage")).gameObject.activeInHierarchy && !((RectTransform)Field(launcher,"weatherPage")).gameObject.activeSelf,"combined MFD opens on effects tab");
+            await TestMfdAccessibilityColours(launcher);
             object effects=Field(launcher,"effects");
             TestKropOptionalUi(effects, launcher);
             TestKropNightAudioUi(effects, launcher);
@@ -866,6 +867,7 @@ public sealed partial class MetDriver : MonoBehaviour
                 Need((bool)preset.Invoke(coord,new object[]{"Ultra"}),"quality preset restored after synthetic multiplayer check");
                 var cloudButton=(UnityEngine.UI.Button)Field(launcher,"cloudButton");Call(launcher,"Refresh");cloudButton.onClick.Invoke();
                 Need(((RectTransform)Field(launcher,"cloudPage")).gameObject.activeInHierarchy,"cloud settings page opens inside weather MFD");
+                await TestMfdAccessibilityCloudColours(launcher);
                 var cloudUi=Field(launcher,"cloudEffects");var cloudPlus=(UnityEngine.UI.Button[])Field(cloudUi,"plus");
                 cloudPlus[0].onClick.Invoke(); Need((string)Prop(coord,"CurrentPreset")=="Low","quality control changes preset from menu");
                 var downscale=cfg.Bind("Quality","Downscale",2);int originalDownscale=downscale.Value;

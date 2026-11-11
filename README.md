@@ -4,6 +4,8 @@ Optional NVGs and sound travel. Your camera can stop putting the bloody goggles 
 
 This candidate builds on the complete 0.8.4 draft, including its standalone startup repair and optional KROP effects. Open FX on the map MFD or press Ctrl + F8. The new NVG appearance and sound-travel options start off.
 
+The FX MFD panel follows the game's accessibility Primary colour, with Secondary for the weather readout and clock. Changes apply without reopening the panel, including its NOAtmoFX controls.
+
 - Cockpit: optional green, white or amber NVG phosphor, bloom, grain, bright speckles, nuclear-flash speckles, automatic gain and raise/lower animation. These only change the local NVG presentation.
 - Camera changes: automatic NVG selection is blocked by default while the KROP component is enabled. Manual NVG selection still works. "Allow game auto-NVG on camera change" restores the game's own behaviour, subject to its Camera Auto NVG preference. The pack does not overwrite that saved preference.
 - Sound: optional travel time for supported world sounds and continuous engines, with separate switches and bounded queues/history. Gun-burst fade is optional. Cockpit warnings remain immediate. Existing native explosion propagation is not delayed a second time.
