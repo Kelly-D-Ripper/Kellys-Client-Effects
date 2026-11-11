@@ -22,7 +22,7 @@ namespace UnifiedEffects.Startup
                     transpiler: new HarmonyMethod(typeof(RuntimeHost), nameof(AfterDiscovery)));
                 installed = true;
             }
-            catch (Exception e) { Logger.CreateLogSource("Unified Effects startup").LogWarning("Optional host protection unavailable: " + e.GetBaseException().Message); }
+            catch (Exception e) { Logger.CreateLogSource("Unified Effects startup").LogWarning("Plugin host protection unavailable: " + e.GetBaseException().Message); }
         }
         private static IEnumerable<CodeInstruction> AfterDiscovery(IEnumerable<CodeInstruction> instructions)
         {
@@ -39,9 +39,11 @@ namespace UnifiedEffects.Startup
         }
         private static Dictionary<string, List<PluginInfo>> Protect(Dictionary<string, List<PluginInfo>> discovered)
         {
+            // Protect the owner even when no optional cloud add-on or mod manager
+            // is installed. A clean BepInEx configuration does not hide its host.
             // This is a lifetime fix only. Never filter plugins or change their preferences.
             var ids = discovered.Values.SelectMany(x => x).Select(x => x.Metadata.GUID);
-            if (!ids.Contains("aaron.boscali.weather-unified") || !ids.Contains("paul.no.clouds")) return discovered;
+            if (!ids.Contains("aaron.boscali.weather-unified")) return discovered;
             try
             {
                 // Before any plugin Awake/OnEnable: avoids interrupting existing coroutines.
@@ -52,9 +54,9 @@ namespace UnifiedEffects.Startup
                 int protection = Convert.ToInt32(Enum.Parse(flags.PropertyType, "HideAndDontSave"));
                 if ((current & protection) != protection) flags.SetValue(host, Enum.ToObject(flags.PropertyType, current | protection), null);
                 flags.DeclaringType.GetMethod("DontDestroyOnLoad", BindingFlags.Public | BindingFlags.Static).Invoke(null, new[] { host });
-                Logger.CreateLogSource("Unified Effects startup").LogInfo("Optional cloud add-on host protected before plugin startup.");
+                Logger.CreateLogSource("Unified Effects startup").LogInfo("Unified Effects plugin host protected before plugin startup.");
             }
-            catch (Exception e) { Logger.CreateLogSource("Unified Effects startup").LogWarning("Optional host protection unavailable: " + e.GetBaseException().Message); }
+            catch (Exception e) { Logger.CreateLogSource("Unified Effects startup").LogWarning("Plugin host protection unavailable: " + e.GetBaseException().Message); }
             return discovered;
         }
     }

@@ -12,14 +12,27 @@ The sound and visual additions are optional. Audio-listener and missile-warning 
 
 No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. NVG changes and general sound-propagation delay remain excluded. Weather/time commands retain their single-player restriction. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
 
+## Requirements
+
+**Install BepInEx 5 for Windows x64/Mono first. It is required and is not bundled with this pack.** Use the official [BepInEx 5.4.23.6 release](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.6). No separate .NET SDK is needed.
+
+DOORMAN and Blueprinter are optional. The pack's menus work without either. NOAtmoFX is also optional and only needed for Volumetric mode.
+
 ## Install only when ready to test
 
-Close Nuclear Option. Back up and move the old BepInEx/plugins/UnifiedEffects folder outside plugins, then extract the candidate into the game folder. Keep your existing configs and the separately installed NOAtmoFX folder. Remove duplicate old pack DLLs rather than leaving both versions to fight over the same effects.
+1. Close Nuclear Option. Install the BepInEx loader beside `NuclearOption.exe`, then launch and close the game once so it creates its config and log folders.
+2. Back up and move the old `BepInEx/plugins/UnifiedEffects` folder outside `plugins`. Remove duplicate older pack DLLs from other plugin folders too. Standalone KROP, Boscali Summer and Better Night conflict with their included versions; do not leave them loaded alongside the pack.
+3. Extract the **client ZIP** into the folder containing `NuclearOption.exe`, merging its `BepInEx` folder. Keep both files: `BepInEx/plugins/UnifiedEffects/UnifiedEffects.dll` and `BepInEx/patchers/UnifiedEffectsStartup.dll`.
+4. Keep your existing `BepInEx/config` files and any separately installed `NOAtmoFX` folder.
 
-The ZIP contains only BepInEx and this README. Its two runtime files are the main UnifiedEffects.dll and the existing small startup helper under BepInEx/patchers. DOORMAN still sees one pack entry.
+Do not put the whole ZIP's contents inside `BepInEx/plugins`, and do not use GitHub's source-code download as the playable pack. The ZIP contains only BepInEx and this README. DOORMAN still sees one pack entry.
+
+The updated startup helper keeps the pack owner and its settings discoverable through startup even when no optional mods are installed. It does not require changing BepInEx's configuration.
+
+Open the expanded map in a mission and look for **FX**, normally on the right-hand bezel, or press **Ctrl+F8** with either Ctrl key. Close the separate MET OFFICE console before using the keyboard panel. If the pack is missing, check `BepInEx/LogOutput.log` for `Loading [Client Effects & Weather`, startup errors or incompatible plugins. If DOORMAN is installed, check that it has not disabled the pack.
 
 [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) remains an optional separate download and is not included.
 
-Checked in isolated missions at 3440x1440 and 1920x1080, including NOAtmoFX 1.4.0 and DOORMAN. This is a local candidate, not an installed or published update. Real multiplayer, longer performance runs and your flight/audio check are still outstanding. See VALIDATION-0.8.4.md in the source for the evidence. No FPS improvement is claimed.
+The main DLL was checked in isolated missions at 3440x1440 and 1920x1080, including NOAtmoFX 1.4.0 and DOORMAN. The refreshed startup helper was also checked without companion mods and with DOORMAN's disabled-pack setting. This is a local candidate, not an installed or published update. Real multiplayer, longer performance runs, physical keyboard/visible Ctrl+F8 testing and your flight/audio check are still outstanding. See VALIDATION-0.8.4.md in the source for the evidence. No FPS improvement is claimed.
 
 [Credits and changes](CREDITS.md) | [Source notes](SOURCE-NOTES.md)

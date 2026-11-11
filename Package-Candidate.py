@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent
 VERSION = "0.8.4"
 BASELINE = ROOT.parent / "SinglePluginCandidate/dist/KellysClientEffects-v0.8.3-CLIENT.zip"
 BASELINE_SHA = "CAA9E4AA43AEBEBBD9010651F9DA9919E1CB35948A3B50B71CEDFD3BE151BB02"
-STARTUP_SHA = "C016C7C59C59C89BEC0834FF5C4A5028F37F1CABCD968C6FC6AADC30F8453C32"
+STARTUP_SHA = "35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A"
 ARCHIVE_NAME = f"KellysClientEffects-v{VERSION}-CLIENT-CANDIDATE.zip"
 MAIN_NAME = "BepInEx/plugins/UnifiedEffects/UnifiedEffects.dll"
 STARTUP_NAME = "BepInEx/patchers/UnifiedEffectsStartup.dll"
@@ -138,6 +138,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", nargs="+", required=True, type=Path, metavar="DIRECTORY",
                         help="Passing isolated mission evidence directories for these exact runtime bytes")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "dist", metavar="DIRECTORY",
+                        help="Seal into a separate directory to retain an earlier candidate unchanged")
     args = parser.parse_args()
     baseline_bytes = BASELINE.read_bytes()
     require(sha(baseline_bytes) == BASELINE_SHA, "Pinned public 0.8.3 ZIP hash mismatch")
@@ -150,7 +152,6 @@ def main() -> None:
     runs = [verify_run(p, payload) for p in directories]
     require(any(not run["disabledBoot"] for run in runs), "At least one enabled-pack mission test is required")
     with zipfile.ZipFile(io.BytesIO(baseline_bytes)) as baseline:
-        require(payload[STARTUP_NAME] == baseline.read(STARTUP_NAME), "Startup does not match the released helper")
         payload["README.md"] = packaged_readme(baseline)
     archive = zip_bytes(payload)
     manifest = {
@@ -173,10 +174,11 @@ def main() -> None:
             "Live multiplayer acceptance against an unmodified server/client remains open.",
             "Sustained frame-time and performance acceptance remains open; no FPS improvement claimed.",
             "Human flight, audio and visual acceptance across aircraft/airfields remains open.",
+            "Physical keyboard delivery and visible Ctrl+F8 IMGUI rendering remain open; native MFD and simulated shortcut logic were checked separately.",
             "NOAtmoFX remains a separately downloaded optional add-on and is not included.",
         ],
     }
-    dist = ROOT / "dist"
+    dist = args.output_dir.resolve()
     manifest_bytes = (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
     sums = (sha(archive) + "  " + ARCHIVE_NAME + "\n").encode("ascii")
     write_sealed({dist / ARCHIVE_NAME: archive, dist / "manifest.json": manifest_bytes, dist / "SHA256SUMS.txt": sums})

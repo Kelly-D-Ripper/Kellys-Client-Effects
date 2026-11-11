@@ -45,6 +45,6 @@ namespace UnifiedEffects.Startup
                 if (handler.FilterStart == start) handler.FilterStart = injected;
             }
         }
-        private static void Warn() => Logger.CreateLogSource("Unified Effects startup").LogWarning("Loader entrypoint changed; optional add-on host protection was not applied.");
+        private static void Warn() => Logger.CreateLogSource("Unified Effects startup").LogWarning("Loader entrypoint changed; Unified Effects host protection was not applied.");
     }
 }

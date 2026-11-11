@@ -10,6 +10,8 @@ Based on the complete public 0.8.3 pack, retaining runway grounding, optional NO
 - Added bounded visual-only fuel explosions, moving embers, optional audio and live cleanup. Original prefab scripts, damage, colliders and network components are not copied.
 - Added optional KROP fixed-wing fast-pass water spray with automatic Boscali hand-off, and delayed lifeboat beacon activation. KROP mode replaces all Boscali aircraft spray/wash and needs Air wake effects; leave it off for rotorcraft and slower-flight wash.
 - Added explicit AudioListener exclusion and missile-warning filter protection.
+- Fixed pack-owner lifetime and settings discovery with a clean BepInEx installation and no optional add-ons. The included startup helper now protects the owner without requiring NOAtmoFX or DOORMAN; it does not change loader configuration.
+- Added explicit BepInEx 5 Windows x64/Mono requirements and extraction instructions. BepInEx is not bundled. DOORMAN, Blueprinter and NOAtmoFX remain optional.
 
 All new feature switches default off. Existing configs and values are retained. No configuration files are shipped. New entries are created in the existing KROP and missile module configs when this candidate is first run.
 

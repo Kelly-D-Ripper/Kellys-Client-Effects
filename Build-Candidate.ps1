@@ -21,15 +21,12 @@ if($LASTEXITCODE -ne 0){throw 'Private payload preparation failed.'}
 Get-ChildItem -LiteralPath $prepared -File | Copy-Item -Destination (Join-Path $PSScriptRoot 'Payloads') -Force
 & $sdk build (Join-Path $PSScriptRoot 'Weather\BoscaliUnifiedWeather.csproj') -c Release "-p:GameDir=$GameDir" --nologo
 if($LASTEXITCODE -ne 0){throw 'Main effects build failed.'}
-# Startup code is unchanged. Reuse its exact released bytes rather than introduce an unrelated rebuild.
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-$released=Join-Path (Split-Path -Parent $PSScriptRoot) 'SinglePluginCandidate\dist\KellysClientEffects-v0.8.3-CLIENT.zip'
-if((Get-FileHash -LiteralPath $released).Hash -ne 'CAA9E4AA43AEBEBBD9010651F9DA9919E1CB35948A3B50B71CEDFD3BE151BB02'){throw 'Released baseline mismatch.'}
-$zip=[IO.Compression.ZipFile]::OpenRead($released)
-try {
-    $entry=$zip.GetEntry('BepInEx/patchers/UnifiedEffectsStartup.dll')
-    $target=Join-Path $PSScriptRoot 'Startup\bin\Release\net472\UnifiedEffectsStartup.dll'
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
-    [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$target,$true)
-} finally {$zip.Dispose()}
+# Reuse the exact clean-loader-tested helper; its matching source is under Startup.
+$startup=Join-Path $PSScriptRoot 'Startup\Pinned\UnifiedEffectsStartup.dll'
+$startupSha='35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A'
+if((Get-FileHash -LiteralPath $startup).Hash -ne $startupSha){throw 'Pinned startup helper mismatch.'}
+$target=Join-Path $PSScriptRoot 'Startup\bin\Release\net472\UnifiedEffectsStartup.dll'
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+Copy-Item -LiteralPath $startup -Destination $target -Force
+if((Get-FileHash -LiteralPath $target).Hash -ne $startupSha){throw 'Startup helper staging mismatch.'}
 Write-Output "Candidate build prepared locally: $stage"

@@ -38,7 +38,7 @@ KROP's NVG effects, nuclear-triggered NVG speckles and added sound-propagation d
 - Street-light tuning, weather and water fixes, canopy compatibility work, effect controls and the integration and bug fixes described above.
 - Ground placement and pavement-end detection for the added runway fixtures; native edge lights are retained, ambiguous placements omitted, and lighting resources released on disable.
 - Single-plugin packaging, private module loading and embedded night-lighting asset loading, with the existing per-effect configuration identities retained.
-- The optional add-on startup helper and NOAtmoFX 1.4 API controls, multiplayer edits without writing the add-on config and protection against saving host settings into local configuration. The standalone add-on renderer remains Paul Leonard's work.
+- The client startup helper, including standalone plugin-host protection, and NOAtmoFX 1.4 API controls, multiplayer edits without writing the add-on config and protection against saving host settings into local configuration. The standalone add-on renderer remains Paul Leonard's work.
 
 ## Other authors and assets
 

@@ -1,11 +1,11 @@
 # 0.8.4 local candidate validation
 
-Validated 11 November 2026. This is a client-only candidate based on public 0.8.3. No installation, GitHub push, release publication, server change or database change was performed.
+Validated 11 November 2026. This is a client-only candidate based on public 0.8.3. This candidate was not installed, pushed or published. The existing public 0.8.3 release description was updated with loader requirements and a workaround; its assets, tag and publication status were unchanged. No server or database change was performed.
 
 ## Exact runtime
 
 - Main DLL SHA256: `C67454DAEAB50BAA7FF45C3024CAD27F1AF559C20B7200A2BBEAA77ECB73227B`.
-- Startup helper SHA256: `C016C7C59C59C89BEC0834FF5C4A5028F37F1CABCD968C6FC6AADC30F8453C32`, unchanged from 0.8.3.
+- Startup helper SHA256: `35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A`, version 0.8.3.1. It protects the standalone plugin host without requiring NOAtmoFX or DOORMAN and does not change loader settings.
 - One public BepInEx plugin, eight private embedded modules, original per-component configuration identities.
 - NOAtmoFX is external and absent from the candidate ZIP.
 
@@ -17,11 +17,21 @@ Validated 11 November 2026. This is a client-only candidate based on public 0.8.
 | Exact compiled assembly audit | 47 passed | `evidence/exact-pack-final.log` |
 | Missile PCM decoding, invalid inputs and non-repeat selection | 225 passed | `evidence/missile-clip-tests.log` |
 | Actual DOORMAN embedded-card parser | Pass | `evidence/doorman-parser.json` |
-| Offline mission, 3440x1440, installed-version DOORMAN, no NOAtmoFX | 855 passed | `evidence/single-plugin-20261111T084116802Z` |
-| Offline mission, 1920x1080, official NOAtmoFX 1.4.0 | 923 passed | `evidence/single-plugin-20261111T084526668Z` |
-| DOORMAN disabled-boot path | 12 passed; no private pack module instantiated | `evidence/single-plugin-20261111T084624466Z` |
+| Earlier main-DLL test, 3440x1440, DOORMAN, original startup helper | 855 passed | `evidence/single-plugin-20261111T084116802Z` |
+| Earlier main-DLL test, 1920x1080, official NOAtmoFX 1.4.0, original startup helper | 923 passed | `evidence/single-plugin-20261111T084526668Z` |
+| Earlier DOORMAN disabled-boot path, original startup helper | 12 passed; no private pack module instantiated | `evidence/single-plugin-20261111T084624466Z` |
+| Current main DLL and repaired helper, 1920x1080, BepInEx 5.4.23.5, no optional mods, isolated default loader configuration | 865 passed | `evidence/single-plugin-20261111T101617562Z` |
+| Current main DLL and repaired helper, DOORMAN disabled-boot path | 12 passed; no private pack module instantiated | `evidence/single-plugin-20261111T101945815Z` |
 
-Each runtime row records the tested DLL hashes in launch.json, assertions/captures under BepInEx/plugins/Probe, and player-data-verification.json. All three runs verified the same 49 player files unchanged and player preferences matching their baseline after restoring only Unity's known window/session entries. Tests used separate plugin/config trees. They did not edit the installed pack or its configs.
+Each runtime row records the tested DLL hashes in launch.json, assertions/captures under BepInEx/plugins/Probe, and player-data-verification.json. All passing runs verified the same 49 player files unchanged and player preferences matching their baseline after restoring only Unity's known window/session entries. Tests used separate plugin/config trees. They did not edit the installed pack or its configs. Earlier rows use the same main DLL but the original helper and are historical coverage, not tests of the new helper bytes.
+
+## Public-package menu investigation
+
+The separate audit at `../Audits/FxMenus-20261111/REPORT.md` downloaded the exact public 0.8.3 ZIP and official BepInEx 5.4.23.6 Windows x64 loader. With fresh default loader configuration and no companion mods, the original helper did not protect the owner plugin host. The owner instance was lost after startup while private modules and UI roots survived. Native FX still registered and opened; therefore this finding does not explain every report of both menus missing. The fallback settings discovery was incomplete after losing the owner.
+
+The exact public main DLL with the repaired helper passed 385 checks in `../Audits/FxMenus-20261111/evidence/fresh-loader-20261111T101135575Z`. The unmodified public ZIP with only `[Chainloader] HideManagerGameObject = true` passed the same 385 checks in `../Audits/FxMenus-20261111/evidence/fresh-loader-20261111T101215451Z`. Both runs preserved player data and preferences. The runtime keyboard checks simulate Unity input reads only inside the released panel Update method, including both Ctrl keys and an old saved shortcut. They do not prove physical keyboard delivery.
+
+The native MFD panel was captured and inspected. Hidden-window tests received no independent IMGUI repaint events, so visible Ctrl+F8 rendering remains an explicit open gate rather than a claimed pass. BepInEx 5 Windows x64 / Unity Mono is required and not bundled. DOORMAN, Blueprinter, TALON, AIRLIFT and NOAtmoFX are not required. Duplicate original component plugins can cause the owner to be skipped through its declared incompatibility rules.
 
 The first successful run covers all 29 optional MFD switches and three tuning controls: default-off state, setting lookup, pagination, enable/disable or increment/decrement, usable row geometry and label overflow. Controls were also added to the Ctrl+F8 panel; its assembly/config discovery was checked, but its whole IMGUI interaction flow was not separately driven by physical input.
 
