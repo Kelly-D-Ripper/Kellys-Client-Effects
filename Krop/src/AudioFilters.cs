@@ -9,6 +9,10 @@ namespace KropClientEffects
     internal enum AudioKind { World, Mechanical, Turbine, Impact }
     internal static class AudioFilters
     {
+        internal struct Registration
+        {
+            internal bool Registered; internal AudioKind Kind; internal float? HitDistance; internal AudioFeature Feature;
+        }
         private sealed class SourceState { internal AudioSource Source; internal AudioKind Kind; internal float? HitDistance; internal bool Bypass; internal AudioFeature Feature; }
         private sealed class HostState
         {
@@ -32,6 +36,17 @@ namespace KropClientEffects
         }
         internal static void Register(AudioSource source, AudioKind kind = AudioKind.World, float? hitDistance = null)
             => RegisterOptional(source, kind, hitDistance, AudioFeature.Base);
+        internal static Registration CaptureRegistration(AudioSource source)
+        {
+            if (source != null && Hosts.TryGetValue(source.gameObject,out HostState host))
+                foreach(var item in host.Sources) if(item.Source==source)
+                    return new Registration { Registered=true,Kind=item.Kind,HitDistance=item.HitDistance,Feature=item.Feature };
+            return default;
+        }
+        internal static void ApplyRegistration(Registration registration, AudioSource source)
+        {
+            if(registration.Registered) RegisterOptional(source,registration.Kind,registration.HitDistance,registration.Feature);
+        }
         internal static void RegisterOptional(AudioSource source, AudioKind kind, float? hitDistance, AudioFeature feature)
         {
             if (!Settings.Active || source == null || !AudioRefinements.Enabled(feature) || IsProtected(source)) return;
@@ -64,7 +79,7 @@ namespace KropClientEffects
                 host.BaseEnabled = host.Filter.enabled; host.BaseQ = host.Filter.lowpassResonanceQ;
             }
         }
-        private static bool IsProtected(AudioSource source)
+        internal static bool IsProtected(AudioSource source)
             => source != null && (ProtectedWarnings.ContainsKey(source) ||
                 (SoundManager.i != null && source.outputAudioMixerGroup != null && source.outputAudioMixerGroup == SoundManager.i.MissileAlertMixer));
         internal static void ProtectWarning(AudioSource source)
@@ -257,11 +272,13 @@ namespace KropClientEffects
             nextGroundScan = Time.unscaledTime + 2f;
             foreach (var vehicle in UnityEngine.Object.FindObjectsOfType<GroundVehicle>())
             {
-                AudioFilters.Register(GroundIdle?.GetValue(vehicle) as AudioSource);
-                AudioFilters.Register(GroundDrive?.GetValue(vehicle) as AudioSource);
+                AudioSource idle = GroundIdle?.GetValue(vehicle) as AudioSource;
+                AudioSource drive = GroundDrive?.GetValue(vehicle) as AudioSource;
+                AudioFilters.Register(idle); AudioFilters.Register(drive);
+                AudioPropagation.ObserveLoop(idle, true); AudioPropagation.ObserveLoop(drive, true);
             }
         }
-        private static bool HostsDisabled() => !AudioConfig.Atmosphere.Value && !AudioConfig.Cockpit.Value;
+        private static bool HostsDisabled() => !AudioConfig.Atmosphere.Value && !AudioConfig.Cockpit.Value && !AudioPropagation.EnginesActive;
         internal static void Apply(Harmony harmony)
         {
             ExtendedAudioHooks.Apply(harmony);
@@ -297,12 +314,13 @@ namespace KropClientEffects
             {
                 if (!pair.Item1.IsStatic && __instance == null) continue;
                 object value = pair.Item1.GetValue(__instance);
-                if (value is AudioSource source) AudioFilters.Register(source, pair.Item2);
+                if (value is AudioSource source) { AudioFilters.Register(source, pair.Item2); AudioPropagationHooks.ObserveBase(__instance,source); }
                 else if (value is Array array)
                     foreach (object item in array)
                     {
-                        if (item is AudioSource audio) AudioFilters.Register(audio, pair.Item2);
-                        else if (item != null) AudioFilters.Register(AccessTools.Field(item.GetType(), "source")?.GetValue(item) as AudioSource, pair.Item2);
+                        AudioSource audio = item as AudioSource;
+                        if (audio == null && item != null) audio = AccessTools.Field(item.GetType(), "source")?.GetValue(item) as AudioSource;
+                        AudioFilters.Register(audio, pair.Item2); AudioPropagationHooks.ObserveBase(__instance,audio);
                     }
             }
             // Latch audio is added dynamically by vanilla on this same gear GameObject.

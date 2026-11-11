@@ -39,6 +39,18 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(1, "Toggle", Weather, "Weather", "OceanWavesEnabled", "Ocean waves"),
             new Item(1, "Toggle", Weather, "Weather", "SeaSprayEnabled", "Aircraft sea spray and foam wakes"),
             new Item(1, "Toggle", Krop, "08 Visual refinements", "KROP water wakes", "KROP fast-pass spray (replaces Boscali)"),
+            new Item(2, "Toggle", Krop, "09 Night vision", "Allow game auto NVG on camera change", "Allow game auto-NVG on camera change"),
+            new Item(2, "Toggle", Krop, "09 Night vision", "Phosphor tint", "NVG phosphor tint"),
+            new Item(2, "Phosphor", Krop, "09 Night vision", "Phosphor colour", "NVG phosphor colour", 0f, 2f),
+            new Item(2, "Toggle", Krop, "09 Night vision", "NVG bloom", "NVG bloom"),
+            new Item(2, "Slider", Krop, "09 Night vision", "NVG bloom strength", "NVG bloom strength", 0f, 80f),
+            new Item(2, "Toggle", Krop, "09 Night vision", "NVG grain", "NVG grain and static"),
+            new Item(2, "Slider", Krop, "09 Night vision", "NVG grain strength", "NVG grain strength", 0f, 1f),
+            new Item(2, "Toggle", Krop, "09 Night vision", "NVG sparkles", "NVG bright speckles"),
+            new Item(2, "IntSlider", Krop, "09 Night vision", "NVG speck count", "NVG speckle count", 0f, 100f),
+            new Item(2, "Toggle", Krop, "09 Night vision", "Nuclear NVG speckles", "Extra NVG speckles after nuclear flashes"),
+            new Item(2, "Toggle", Krop, "09 Night vision", "NVG auto gain", "NVG automatic brightness adjustment"),
+            new Item(2, "Toggle", Krop, "09 Night vision", "NVG transition", "NVG raise and lower animation"),
             new Item(2, "Toggle", Boscali, "Immersion", "PilotBodyEnabled", "First-person pilot body"),
             new Item(2, "Toggle", Boscali, "Immersion", "PilotControlMotionEnabled", "Pilot control and G-load motion"),
             new Item(2, "Toggle", Boscali, "Immersion", "KneeboardEnabled", "Pilot kneeboard (requires body)"),
@@ -89,6 +101,12 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Hangars", "Hangar illumination"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Helipads", "Helipad lights"),
             new Item(4, "Toggle", Airfield, "Airfield lighting", "Industrial and ports", "Industrial and port lights"),
+            new Item(5, "Toggle", Krop, "09 Sound propagation", "World sound delay", "World sound travel time"),
+            new Item(5, "Toggle", Krop, "09 Sound propagation", "Engine sound delay", "Engine sound travel time"),
+            new Item(5, "Toggle", Krop, "09 Sound propagation", "Gun loop fade", "Gun burst fade (requires world delay)"),
+            new Item(5, "Slider", Krop, "09 Sound propagation", "Maximum delay seconds", "Maximum sound delay (seconds)", 1f, 30f),
+            new Item(5, "IntSlider", Krop, "09 Sound propagation", "Maximum delayed sounds", "Maximum delayed sounds", 16f, 512f),
+            new Item(5, "IntSlider", Krop, "09 Sound propagation", "Maximum engine sources", "Maximum delayed engines", 4f, 64f),
             new Item(5, "Toggle", CockpitAudio, "Cockpit Audio", "PilotBreathing", "Pilot breathing and G-suit sounds"),
             new Item(5, "Toggle", CockpitAudio, "Cockpit Audio", "AirframeCreaks", "Airframe creaks and stress sounds"),
             new Item(5, "Toggle", CockpitAudio, "Cockpit Audio", "CanopyWind", "Canopy wind rush"),
@@ -241,7 +259,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         internal void Refresh()
         {
             if(cloudOnly)hint.text=CloudModeCoordinator.Live?.HostOwnsWeather==true?"HOST WEATHER / LOCAL CHANGES THIS SESSION":CloudModeCoordinator.Live?.SessionOnly==true?"MULTIPLAYER / LOCAL CHANGES THIS SESSION":"NOATMOFX CLOUDS / ATMOSPHERE";
-            else hint.text=category==5?"ADDITIONAL FILTERS USE MUFFLING SWITCHES":category==1?"KROP: FIXED-WING / AIR WAKE REQUIRED":"SELECT A CATEGORY / LOCAL CLIENT SETTINGS";
+            else hint.text=category==5?"TRAVEL TIME IS OPTIONAL / KROP MASTER REQUIRED":category==2?"NVG: NORMAL KEY / OPTIONAL EFFECTS START OFF":category==1?"KROP: FIXED-WING / AIR WAKE REQUIRED":"SELECT A CATEGORY / LOCAL CLIENT SETTINGS";
             visible.Clear();foreach(var x in Items)if(x.category==category)visible.Add(x);
             int pages=Math.Max(1,(visible.Count+PageSize-1)/PageSize);page=Mathf.Clamp(page,0,pages-1);
             for(int i=0;i<categories.Length;i++) label(categories[i],Names[i],i==category,true);
@@ -260,6 +278,8 @@ namespace BoscaliSummer.Modules.Weather.Presentation
                 else if(usable && preset)value=api.CurrentPreset.ToUpperInvariant();
                 else if(usable && item.kind=="Toggle" && entry.BoxedValue is bool b)value=b?"[ X ]":"[   ]";
                 else if(usable && item.kind=="Slider" && entry.BoxedValue is float f)value=f.ToString("0.00");
+                else if(usable && item.kind=="IntSlider" && entry.BoxedValue is int count)value=count.ToString();
+                else if(usable && item.kind=="Phosphor" && entry.BoxedValue is int colour)value=colour>=0 && colour<3?new[]{"GREEN","WHITE","AMBER"}[colour]:"--";
                 else if(usable && item.kind=="Front" && entry.BoxedValue is int front)value=front>=0 && front<=3?new[]{"NONE","COLD","WARM","AUTO"}[front]:"--";
                 else if(usable && item.kind=="Downscale" && entry.BoxedValue is int down)value=down.ToString()+"X";
                 else if(usable && item.kind=="EnumChoice")value=entry.BoxedValue?.ToString()??"--";
@@ -293,6 +313,8 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             try {
             if(item.kind=="Toggle" && entry.BoxedValue is bool b)entry.BoxedValue=!b;
             else if(item.kind=="Slider" && direction!=0 && entry.BoxedValue is float f)entry.BoxedValue=Mathf.Clamp(f+direction*(item.max-item.min)/20f,item.min,item.max);
+            else if(item.kind=="IntSlider" && direction!=0 && entry.BoxedValue is int count)entry.BoxedValue=Mathf.Clamp(count+direction*Mathf.Max(1,Mathf.RoundToInt((item.max-item.min)/20f)),Mathf.RoundToInt(item.min),Mathf.RoundToInt(item.max));
+            else if(item.kind=="Phosphor" && direction!=0 && entry.BoxedValue is int colour)entry.BoxedValue=(Mathf.Clamp(colour,0,2)+direction+3)%3;
             else if(item.kind=="Front" && direction!=0 && entry.BoxedValue is int front)entry.BoxedValue=(front+direction+4)%4;
             else if(item.kind=="Downscale" && direction!=0 && entry.BoxedValue is int down){int[] values={1,2,3,4};int current=Array.IndexOf(values,down);entry.BoxedValue=values[(Mathf.Max(0,current)+direction+values.Length)%values.Length];}
             else if(item.kind=="EnumChoice" && direction!=0 && entry.SettingType.IsEnum)

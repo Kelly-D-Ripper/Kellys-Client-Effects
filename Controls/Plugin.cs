@@ -151,6 +151,20 @@ namespace ClientEffectsControlPanel
                     }
                     break;
                 case 2:
+                    GUILayout.Label("Optional NVG effects use the KROP master and your normal NVG key. All start off.");
+                    Toggle(Krop, "09 Night vision", "Allow game auto NVG on camera change", "Allow game auto-NVG on camera change");
+                    Toggle(Krop, "09 Night vision", "Phosphor tint", "NVG phosphor tint");
+                    IntChoice(Krop, "09 Night vision", "Phosphor colour", "NVG phosphor colour", new[] { "Green", "White", "Amber" });
+                    Toggle(Krop, "09 Night vision", "NVG bloom", "NVG bloom");
+                    Slider(Krop, "09 Night vision", "NVG bloom strength", "NVG bloom strength", 0f, 80f);
+                    Toggle(Krop, "09 Night vision", "NVG grain", "NVG grain and static");
+                    Slider(Krop, "09 Night vision", "NVG grain strength", "NVG grain strength", 0f, 1f);
+                    Toggle(Krop, "09 Night vision", "NVG sparkles", "NVG bright speckles");
+                    IntSlider(Krop, "09 Night vision", "NVG speck count", "NVG speckle count", 0, 100);
+                    Toggle(Krop, "09 Night vision", "Nuclear NVG speckles", "Extra NVG speckles after nuclear flashes");
+                    Toggle(Krop, "09 Night vision", "NVG auto gain", "NVG automatic brightness adjustment");
+                    Toggle(Krop, "09 Night vision", "NVG transition", "NVG raise and lower animation");
+                    GUILayout.Space(8);
                     Toggle(Boscali, "Immersion", "PilotBodyEnabled", "First-person pilot body");
                     Toggle(Boscali, "Immersion", "PilotControlMotionEnabled", "Pilot control and G-load motion");
                     Toggle(Boscali, "Immersion", "KneeboardEnabled", "Pilot kneeboard (requires body)");
@@ -211,6 +225,14 @@ namespace ClientEffectsControlPanel
                     GUILayout.Label("Compact lighting limits lamp size and light spread. Radius and strength apply immediately; pole layout changes may need a mission reload.");
                     break;
                 case 5:
+                    GUILayout.Label("Optional sound travel time uses the KROP master. UI and cockpit warnings are excluded.");
+                    Toggle(Krop, "09 Sound propagation", "World sound delay", "World sound travel time");
+                    Toggle(Krop, "09 Sound propagation", "Engine sound delay", "Engine sound travel time");
+                    Toggle(Krop, "09 Sound propagation", "Gun loop fade", "Gun burst fade (requires world delay)");
+                    Slider(Krop, "09 Sound propagation", "Maximum delay seconds", "Maximum sound delay (seconds)", 1f, 30f);
+                    IntSlider(Krop, "09 Sound propagation", "Maximum delayed sounds", "Maximum delayed sounds", 16, 512);
+                    IntSlider(Krop, "09 Sound propagation", "Maximum engine sources", "Maximum delayed engines", 4, 64);
+                    GUILayout.Space(8);
                     Toggle(CockpitAudio, "Cockpit Audio", "PilotBreathing", "Pilot breathing and G-suit sounds");
                     Toggle(CockpitAudio, "Cockpit Audio", "AirframeCreaks", "Airframe creaks and stress sounds");
                     Toggle(CockpitAudio, "Cockpit Audio", "CanopyWind", "Canopy wind rush");
@@ -302,6 +324,24 @@ namespace ClientEffectsControlPanel
             GUILayout.BeginHorizontal();
             foreach (object value in Enum.GetValues(entry.SettingType))
                 if (GUILayout.Toggle(Equals(entry.BoxedValue, value), value.ToString(), GUI.skin.button) && !Equals(entry.BoxedValue, value)) entry.BoxedValue = value;
+            GUILayout.EndHorizontal();
+        }
+        void IntSlider(string id, string section, string key, string label, int min, int max)
+        {
+            ConfigEntry<int> entry;
+            if (!Find(id, section, key, out entry)) { GUILayout.Label(label + " - component or setting unavailable"); return; }
+            GUILayout.Label(label + ": " + entry.Value);
+            int value = Mathf.Clamp(Mathf.RoundToInt(GUILayout.HorizontalSlider(entry.Value, min, max)), min, max);
+            if (value != entry.Value) entry.Value = value;
+        }
+        void IntChoice(string id, string section, string key, string label, string[] choices)
+        {
+            ConfigEntry<int> entry;
+            if (!Find(id, section, key, out entry)) { GUILayout.Label(label + " - component or setting unavailable"); return; }
+            GUILayout.Label(label);
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < choices.Length; i++)
+                if (GUILayout.Toggle(entry.Value == i, choices[i], GUI.skin.button) && entry.Value != i) entry.Value = i;
             GUILayout.EndHorizontal();
         }
         void CaptureAvailable()

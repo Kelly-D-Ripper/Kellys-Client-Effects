@@ -99,7 +99,7 @@ namespace KropClientEffects
             if (!Settings.Active || !Bindings.TryGetValue(__originalMethod, out var fields)) return;
             foreach (var field in fields)
             {
-                if (!AudioRefinements.Enabled(field.Feature)) continue;
+                if (!AudioRefinements.Enabled(field.Feature) && !AudioPropagation.EventActive && !AudioPropagation.EnginesActive) continue;
                 object value = field.Field.GetValue(__instance);
                 if (value is AudioSource source) Register(source, field.Feature, field.Kind);
                 else if (value is Array array) foreach (object item in array)
@@ -150,12 +150,15 @@ namespace KropClientEffects
             if (matches == 0) throw new InvalidOperationException("Expected native AudioSource playback was not found in " + __originalMethod.Name);
             return result;
         }
-        private static void PlayNow(AudioSource source, int feature) { Register(source, (AudioFeature)feature); source.Play(); }
-        private static void PlayOneShotNow(AudioSource source, AudioClip clip, int feature) { Register(source, (AudioFeature)feature); source.PlayOneShot(clip); }
-        private static void PlayOneShotVolumeNow(AudioSource source, AudioClip clip, float volume, int feature) { Register(source, (AudioFeature)feature); source.PlayOneShot(clip, volume); }
+        private static void PlayNow(AudioSource source, int feature) { Register(source, (AudioFeature)feature); AudioPropagation.Play(source); }
+        private static void PlayOneShotNow(AudioSource source, AudioClip clip, int feature) { Register(source, (AudioFeature)feature); AudioPropagation.PlayOneShot(source,clip); }
+        private static void PlayOneShotVolumeNow(AudioSource source, AudioClip clip, float volume, int feature) { Register(source, (AudioFeature)feature); AudioPropagation.PlayOneShotVolume(source,clip,volume); }
         private static void WarningPostfix(object __instance) { AudioFilters.ProtectWarning(alarmSource?.GetValue(__instance) as AudioSource); }
         internal static void Register(AudioSource source, AudioFeature feature, AudioKind kind = AudioKind.World)
-        { if (Settings.Active && AudioRefinements.Enabled(feature)) AudioFilters.RegisterOptional(source, kind, null, feature); }
+        {
+            if (Settings.Active && AudioRefinements.Enabled(feature)) AudioFilters.RegisterOptional(source, kind, null, feature);
+            AudioPropagationHooks.ObserveExtended(source,feature);
+        }
 
         internal static void Tick()
         {

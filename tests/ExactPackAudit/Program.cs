@@ -35,7 +35,7 @@ try {
     }
     var krop=Flatten(assemblies["aaron.boscali.krop-unified"].MainModule.Types).ToArray();
     var kropOperands=krop.SelectMany(t=>t.Methods.Where(m=>m.HasBody)).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand?.ToString()??"").ToArray();
-    Check(!kropOperands.Any(s=>s.Contains("NightVision")||s.Contains("MushroomCloud")),"KROP has no night vision or nuclear flash hooks");
+    Check(krop.Any(t=>t.Name=="NightVisionCameraChoicePatch") && krop.Any(t=>t.Name=="NightVisionEffects"),"Optional NVG renderer and scoped camera-choice policy present");
     Check(krop.Any(t=>t.Name=="LocalLifeboats"),"Cosmetic lifeboats present");
     var optionalNames = new[]{"AudioRefinements","ExtendedAudioHooks","ReadOnlyCabinAcoustics","VisualRefinements","ParticleVisualCopy"};
     foreach(var name in optionalNames) Check(krop.Any(t=>t.Name==name),"Optional presentation implementation present "+name);
@@ -60,7 +60,7 @@ try {
     var weatherTypes=Flatten(assemblies["aaron.boscali.weather-unified"].MainModule.Types).ToArray();
     Check(!weatherTypes.Any(t=>new[]{"WeatherCloudPass","CloudRenderer","WeatherCloudShadows","CloudSeekerPatch"}.Contains(t.Name)),"Replacement volumetric cloud rendering and cloud gameplay patches absent");
     Check(!assemblies.SelectMany(p=>Flatten(p.Value.MainModule.Types)).Any(t=>t.Name=="PilotReflectionCapture"),"Pilot reflection capture absent from all components");
-    Check(!all.Any(x=>x.i.Operand is MethodReference mr && (mr.Name=="PlayDelayed"||mr.Name=="PlayScheduled")),"No identified scheduled sound-playback calls");
+    Check(!all.Any(x=>x.i.Operand is MethodReference mr && (mr.Name=="PlayDelayed"||mr.Name=="PlayScheduled") && !(x.plugin=="aaron.boscali.krop-unified" && x.method.DeclaringType.Name.StartsWith("AudioPropagation",StringComparison.Ordinal))),"Scheduled playback confined to optional local propagation implementation");
     Check(!all.Any(x=>x.i.Operand is MethodReference mr && ((mr.DeclaringType.FullName.StartsWith("Mirage.") && (mr.Name.Contains("Send",StringComparison.OrdinalIgnoreCase)||mr.Name.Contains("Rpc",StringComparison.OrdinalIgnoreCase))) || mr.Name.StartsWith("CallCmd",StringComparison.Ordinal))),"No identified network send calls");
     Check(!all.Any(x=>x.i.OpCode==OpCodes.Stfld && x.i.Operand is FieldReference fr && fr.DeclaringType.FullName=="NightVision"),"No direct night vision field writes");
     var resources=assemblies["aaron.boscali.unified"].MainModule.Resources.Select(r=>r.Name).ToHashSet();

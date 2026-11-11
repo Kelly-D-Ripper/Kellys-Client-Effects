@@ -1,4 +1,4 @@
-"""Seal the tested local 0.8.4 candidate; never install or publish it."""
+"""Seal the tested local 0.8.5 candidate; never install or publish it."""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +12,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "0.8.4"
+VERSION = "0.8.5"
 BASELINE = ROOT.parent / "SinglePluginCandidate/dist/KellysClientEffects-v0.8.3-CLIENT.zip"
 BASELINE_SHA = "CAA9E4AA43AEBEBBD9010651F9DA9919E1CB35948A3B50B71CEDFD3BE151BB02"
 STARTUP_SHA = "35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A"
@@ -90,7 +90,7 @@ def packaged_readme(baseline: zipfile.ZipFile) -> bytes:
     require("</details>" in notices, "Pinned licence block is incomplete")
     intro = (ROOT / "README.md").read_text(encoding="utf-8-sig").rstrip()
     credits = (ROOT / "CREDITS.md").read_text(encoding="utf-8-sig").rstrip()
-    require("0.8.4" in intro, "Candidate README does not identify 0.8.4")
+    require(VERSION in intro, "Candidate README does not identify " + VERSION)
     require("\u2014" not in intro + credits, "README/credits must use regular hyphens")
     combined = external_links(intro) + "\n\n" + external_links(credits) + "\n\n"
     combined += (
@@ -163,14 +163,16 @@ def main() -> None:
         "installed": False,
         "published": False,
         "databaseImpact": "none",
-        "configurationImpact": "Additive optional settings default off. Existing config identities and values retained. No config files are included or overwritten.",
+        "configurationImpact": "Additive optional settings default off, including permission for native camera auto-NVG. Camera auto-selection is therefore blocked by default while the KROP module is enabled. Existing config identities and values retained. No config files are included or overwritten.",
         "baseline": {"archive": BASELINE.name, "sha256": BASELINE_SHA},
-        "sourceBranch": "codex/client-effects-0.8.4",
+        "featureBaseline": {"version": "0.8.4", "sourceCommit": "ab62a87a7cf4caa2b3c53e0b523896285043ca7d"},
+        "sourceBranch": "codex/optional-nvg-audio-0.8.5",
         "sourceCommit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "sourceDirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()),
         "files": [{"path": name, "size": len(data), "sha256": sha(data)} for name, data in sorted(payload.items())],
         "missionTests": runs,
         "limits": [
+            "Visible ordinary-frame NVG auto-gain sampling remains open: hidden tests suppress normal camera rendering; actual URP render-request sampling and cleanup pass.",
             "Live multiplayer acceptance against an unmodified server/client remains open.",
             "Sustained frame-time and performance acceptance remains open; no FPS improvement claimed.",
             "Human flight, audio and visual acceptance across aircraft/airfields remains open.",

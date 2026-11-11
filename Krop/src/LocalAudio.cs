@@ -10,7 +10,7 @@ namespace KropClientEffects
 {
     internal static class LocalAudio
     {
-        internal static void Play(AudioSource template,AudioClip clip,Vector3 position,float volume,float? minDistance=null,float? maxDistance=null,float? pitch=null,bool shapeCrack=false)
+        internal static void Play(AudioSource template,AudioClip clip,Vector3 position,float volume,float? minDistance=null,float? maxDistance=null,float? pitch=null,bool shapeCrack=false,bool propagate=false)
         {
             if (clip==null) return;
             GameObject obj=VisualObjects.Create("Audio","audio",64);
@@ -30,7 +30,10 @@ namespace KropClientEffects
                 highpass.cutoffFrequency = 4000f; highpass.highpassResonanceQ = 1f;
                 obj.AddComponent<CrackTransient>().Initialize(source, highpass, clip.length / Mathf.Max(0.01f, Mathf.Abs(source.pitch)));
             }
-            source.clip=clip; AudioFilters.Register(source); source.Play();
+            source.clip=clip;
+            AudioFilters.Register(source);
+            if (propagate && AudioPropagation.TryPlay(source,clip)) { UnityEngine.Object.Destroy(obj); return; }
+            source.Play();
             UnityEngine.Object.Destroy(obj,clip.length/Mathf.Max(0.01f,Mathf.Abs(source.pitch))+0.25f);
         }
     }
@@ -102,7 +105,7 @@ namespace KropClientEffects
             if (BoomConfig.Suppress.Value && Time.unscaledTime-state.Last<BoomConfig.Cooldown.Value) return;
             state.Last=Time.unscaledTime;
             AudioFilters.Register(source);
-            if (!BoomConfig.Replacement.Value) { source.PlayOneShot(clip,volumeScale); return; }
+            if (!BoomConfig.Replacement.Value) { AudioPropagation.PlayOneShotVolume(source,clip,volumeScale); return; }
             EnsureClips();
             var manager=SceneSingleton<CameraStateManager>.i;
             float distance=manager!=null?Vector3.Distance(source.transform.position,manager.transform.position):0f;
@@ -116,7 +119,7 @@ namespace KropClientEffects
             AudioClip replacement=pool[index]??clip;
             LocalAudio.Play(source,replacement,source.transform.position,source.volume*volumeScale*BoomConfig.Volume.Value,
                 distant?(float?)BoomConfig.FarDistance.Value:null,
-                distant?(float?)Mathf.Max(BoomConfig.FarDistance.Value+1f,BoomConfig.FarMaxDistance.Value):null);
+                distant?(float?)Mathf.Max(BoomConfig.FarDistance.Value+1f,BoomConfig.FarMaxDistance.Value):null,propagate:true);
         }
         private static void EnsureClips()
         {

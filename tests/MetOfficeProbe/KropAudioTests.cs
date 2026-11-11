@@ -182,7 +182,7 @@ public sealed partial class MetDriver
 
             var shaping = Bool("02 Bullet near misses", "KROP crack shaping"); shaping.Value = true;
             asm.GetType("KropClientEffects.LocalAudio", true).GetMethod("Play", F).Invoke(null,
-                new object[] { null, clip, SceneSingleton<CameraStateManager>.i.transform.position, 0f, null, null, 1f, true });
+                new object[] { null, clip, SceneSingleton<CameraStateManager>.i.transform.position, 0f, null, null, 1f, true, false });
             var transientType = asm.GetType("KropClientEffects.CrackTransient", true);
             var transient = UnityEngine.Object.FindObjectsOfType(transientType).Cast<Component>().Single();
             objects.Add(transient.gameObject);

@@ -727,6 +727,9 @@ public sealed partial class MetDriver : MonoBehaviour
             if(Chainloader.PluginInfos.TryGetValue("paul.no.clouds",out var missionAddon)) Note("INFO addon after mission alive="+(missionAddon.Instance!=null));
             TestKropPerformance();
             TestKropAudioRefinements();
+            TestKropCameraChoice();
+            TestKropPropagation();
+            await TestKropNightVision();
             TestKropVisualRefinements();
             await TestLighting();
             Type mt=assembly.GetType("BoscaliSummer.Modules.Weather.Runtime.WeatherManager",true);
@@ -749,6 +752,7 @@ public sealed partial class MetDriver : MonoBehaviour
             Need(((RectTransform)Field(launcher,"effectsPage")).gameObject.activeInHierarchy && !((RectTransform)Field(launcher,"weatherPage")).gameObject.activeSelf,"combined MFD opens on effects tab");
             object effects=Field(launcher,"effects");
             TestKropOptionalUi(effects, launcher);
+            TestKropNightAudioUi(effects, launcher);
             var rows=(UnityEngine.UI.Button[])Field(effects,"rows");
             var categories=(UnityEngine.UI.Button[])Field(effects,"categories");
             var effectsType=effects.GetType();var allItems=(System.Collections.IEnumerable)effectsType.GetField("Items",F).GetValue(null);

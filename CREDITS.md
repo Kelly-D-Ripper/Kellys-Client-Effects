@@ -29,7 +29,11 @@ The complete Better Night build source has not yet been assembled here. See [SOU
 - **Varied fuel explosions:** The optional fireball, smoke, flame and ember presentation follows KROP's effect. Our implementation copies only allowlisted particle-rendering and audio properties into new local objects. It does not instantiate the original gameplay prefab or copy its damage, physics or network components.
 - **Missile boom recordings:** Three KROP recordings are available as an optional sound choice. The detector remains Kelly's bounded local experiment, with the game's original recording available as fallback.
 
-KROP's NVG effects, nuclear-triggered NVG speckles and added sound-propagation delay are not included. Neither are its ammunition, projectile, countermeasure-physics, AI-control or destructive canopy changes. Optional non-repeating boom selection is our refinement; the original KROP selector can repeat samples.
+The 0.8.5 candidate adds optional KROP-inspired NVG phosphors, bloom, grain/static, sensor speckles, nuclear-triggered speckles, rendered-brightness gain and raise/lower animation. Kelly's adaptation separates the switches, defaults them off, restores owned rendering state and bounds textures, readbacks and overlay resources. A separate camera-choice guard prevents the game's automatic NVG selection by default without changing the saved game preference.
+
+Optional sound propagation uses Kelly's bounded local event snapshots and continuous-source history, based on KROP's sound-travel concept. It preserves native explosion propagation and excludes warnings and own-cockpit sounds. It is not a verbatim port of every upstream audio path. See FEATURES-0.8.5.md for coverage and differences.
+
+KROP's ammunition, projectile, countermeasure-physics, AI-control and destructive canopy changes remain excluded. Optional non-repeating boom selection is our refinement; the original KROP selector can repeat samples.
 
 ## Kelly's additions and changes
 

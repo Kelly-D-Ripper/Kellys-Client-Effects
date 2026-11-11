@@ -1,8 +1,14 @@
-# Client Effects & Weather 0.8.4 - candidate
+# Client Effects & Weather 0.8.5 - candidate
 
-More optional effects. Still one entry in the mod menu.
+Optional NVGs and sound travel. Your camera can stop putting the bloody goggles back on.
 
-This candidate adds the approved client-side KROP effects to the complete 0.8.3 pack. Open FX on the map MFD or press Ctrl + F8. All 29 new switches start off, so updating does not suddenly turn everything up to eleven.
+This candidate builds on the complete 0.8.4 draft, including its standalone startup repair and optional KROP effects. Open FX on the map MFD or press Ctrl + F8. The new NVG appearance and sound-travel options start off.
+
+- Cockpit: optional green, white or amber NVG phosphor, bloom, grain, bright speckles, nuclear-flash speckles, automatic gain and raise/lower animation. These only change the local NVG presentation.
+- Camera changes: automatic NVG selection is blocked by default while the KROP component is enabled. Manual NVG selection still works. "Allow game auto-NVG on camera change" restores the game's own behaviour, subject to its Camera Auto NVG preference. The pack does not overwrite that saved preference.
+- Sound: optional travel time for supported world sounds and continuous engines, with separate switches and bounded queues/history. Gun-burst fade is optional. Cockpit warnings remain immediate. Existing native explosion propagation is not delayed a second time.
+
+The 0.8.4 additions are retained:
 
 - Sound: Additional cockpit/distance filtering for 19 sound families, canopy/open-cabin acoustics, bullet-crack shaping, optional missile recordings and non-repeating aircraft booms.
 - Battlefield: Extra fuel fireballs, smoke, flames and embers, optional cook-off audio, and delayed lifeboat beacons. The extra explosions are decorative and do not add damage.
@@ -10,7 +16,7 @@ This candidate adds the approved client-side KROP effects to the complete 0.8.3 
 
 The sound and visual additions are optional. Audio-listener and missile-warning protections are applied while the relevant module is active.
 
-No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. NVG changes and general sound-propagation delay remain excluded. Weather/time commands retain their single-player restriction. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
+No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. Weather/time commands retain their single-player restriction. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
 
 ## Requirements
 
@@ -33,6 +39,8 @@ Open the expanded map in a mission and look for **FX**, normally on the right-ha
 
 [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) remains an optional separate download and is not included.
 
-The main DLL was checked in isolated missions at 3440x1440 and 1920x1080, including NOAtmoFX 1.4.0 and DOORMAN. The refreshed startup helper was also checked without companion mods and with DOORMAN's disabled-pack setting. This is a local candidate, not an installed or published update. Real multiplayer, longer performance runs, physical keyboard/visible Ctrl+F8 testing and your flight/audio check are still outstanding. See VALIDATION-0.8.4.md in the source for the evidence. No FPS improvement is claimed.
+This is a local candidate, not an installed or published update. See VALIDATION-0.8.5.md for checks of these exact files and remaining limits. Real multiplayer, longer performance runs, physical keyboard/visible Ctrl+F8 testing and human flight/audio acceptance remain separate checks. No FPS improvement is claimed.
+
+NVG auto-gain's real rendering sample and cleanup pass, but its ordinary visible-window operation still needs a flight check; the hidden test window skips normal rendering. It remains off by default.
 
 [Credits and changes](CREDITS.md) | [Source notes](SOURCE-NOTES.md)
