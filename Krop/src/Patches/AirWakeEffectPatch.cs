@@ -51,6 +51,18 @@ namespace KropClientEffects.Patches
             new ConditionalWeakTable<Aircraft, AirWakeState>();
         private static readonly ParticleSystem.Particle[] _particleBuffer =
             new ParticleSystem.Particle[MaxParticlesPerSystem];
+        private static readonly System.Collections.Generic.List<ParticleSystem> _providerSystems =
+            new System.Collections.Generic.List<ParticleSystem>();
+
+        internal static void ClearProviderParticles()
+        {
+            for (int i = _providerSystems.Count - 1; i >= 0; i--)
+            {
+                var system = _providerSystems[i];
+                if (system == null) { _providerSystems.RemoveAt(i); continue; }
+                system.Clear(false);
+            }
+        }
 
         private static void Postfix(Aircraft __instance)
         {
@@ -119,7 +131,8 @@ namespace KropClientEffects.Patches
                     + $"mass={state.Mass:F0}kg particles={state.Systems[0].particleCount + state.Systems[1].particleCount}");
             }
 
-            if (!hitGround || hitWater || !AirWakeConfig.Dust.Value)
+            if ((!hitGround && !hitWater) || (hitWater && !VisualRefinements.KropWaterWakesActive)
+                || (hitGround && !AirWakeConfig.Dust.Value))
             {
                 SetEmitting(state, __instance, false, "no ground/water hit");
                 return;
@@ -294,6 +307,7 @@ namespace KropClientEffects.Patches
         }
         private static void CreateEffect(Aircraft aircraft, AirWakeState state)
         {
+            _providerSystems.RemoveAll(system => system == null);
             if (VisualObjects.Count("wake") + 2 > AirWakeConfig.MaxEmitters.Value * 2) return;
             state.EffectAttempted = true;
             bool verbose = VerboseLoggingConfig.Enabled.Value;
@@ -325,6 +339,7 @@ namespace KropClientEffects.Patches
             {
                 state.EffectObjects[i] = VisualObjects.Create(i == RightSystem ? "AirWake_Right" : "AirWake_Left", "wake", AirWakeConfig.MaxEmitters.Value * 2);
                 state.Systems[i] = BuildSystem(state.EffectObjects[i], material);
+                _providerSystems.Add(state.Systems[i]);
                 state.Renderers[i] = state.EffectObjects[i].GetComponent<ParticleSystemRenderer>();
             }
             ApplySpin(state);
@@ -397,7 +412,7 @@ namespace KropClientEffects.Patches
             return system;
         }
 
-        internal static void ClearAll() { _states = new ConditionalWeakTable<Aircraft, AirWakeState>(); }
+        internal static void ClearAll() { _states = new ConditionalWeakTable<Aircraft, AirWakeState>(); _providerSystems.Clear(); }
 
         private static void DestroyEffect(AirWakeState state)
         {

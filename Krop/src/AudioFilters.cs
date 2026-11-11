@@ -9,17 +9,21 @@ namespace KropClientEffects
     internal enum AudioKind { World, Mechanical, Turbine, Impact }
     internal static class AudioFilters
     {
-        private sealed class SourceState { internal AudioSource Source; internal AudioKind Kind; internal float? HitDistance; internal bool Bypass; }
+        private sealed class SourceState { internal AudioSource Source; internal AudioKind Kind; internal float? HitDistance; internal bool Bypass; internal AudioFeature Feature; }
         private sealed class HostState
         {
             internal GameObject Host; internal AudioLowPassFilter Filter;
             internal bool Created, BaseEnabled; internal float BaseCutoff, BaseQ, LastCutoff;
+            internal float IdleSince;
             internal readonly List<SourceState> Sources = new List<SourceState>();
         }
         private static readonly Dictionary<GameObject, HostState> Hosts = new Dictionary<GameObject, HostState>();
         private static readonly List<GameObject> Remove = new List<GameObject>();
         private static readonly List<AudioSource> Siblings = new List<AudioSource>();
         private static readonly Collider[] HitBuffer = new Collider[32];
+        private static readonly Dictionary<AudioSource, bool> ProtectedWarnings = new Dictionary<AudioSource, bool>();
+        private static readonly List<AudioSource> DeadWarnings = new List<AudioSource>();
+        private static float nextWarningCleanup;
         private static float ejectedAt = float.NegativeInfinity;
         internal static bool InCockpit()
         {
@@ -27,9 +31,13 @@ namespace KropClientEffects
             return camera != null && camera.currentState == camera.cockpitState;
         }
         internal static void Register(AudioSource source, AudioKind kind = AudioKind.World, float? hitDistance = null)
+            => RegisterOptional(source, kind, hitDistance, AudioFeature.Base);
+        internal static void RegisterOptional(AudioSource source, AudioKind kind, float? hitDistance, AudioFeature feature)
         {
-            if (!Settings.Active || source == null) return;
+            if (!Settings.Active || source == null || !AudioRefinements.Enabled(feature) || IsProtected(source)) return;
             GameObject obj = source.gameObject;
+            // A filter on the AudioListener's object affects the whole mix, not just this source.
+            if (obj.GetComponent<AudioListener>() != null) return;
             if (!Hosts.TryGetValue(obj, out HostState host))
             {
                 if (Hosts.Count >= AudioConfig.MaxHosts.Value) return;
@@ -38,7 +46,7 @@ namespace KropClientEffects
                     BaseEnabled = filter != null && filter.enabled,
                     BaseCutoff = filter != null ? filter.cutoffFrequency : 22000f,
                     BaseQ = filter != null ? filter.lowpassResonanceQ : 1f,
-                    LastCutoff = -1f };
+                    LastCutoff = -1f, IdleSince = Time.unscaledTime };
                 Hosts.Add(obj, host);
             }
             SourceState state = null;
@@ -48,13 +56,26 @@ namespace KropClientEffects
                 state = new SourceState { Source = source, Bypass = source.bypassEffects };
                 host.Sources.Add(state);
             }
-            state.Kind = kind; state.HitDistance = hitDistance;
+            state.Kind = kind; state.HitDistance = hitDistance; state.Feature = feature;
             // Vanilla explosion filters can update their own cutoff when a pooled source replays.
             if (!host.Created && host.Filter != null && !Mathf.Approximately(host.Filter.cutoffFrequency, host.LastCutoff))
             {
                 host.BaseCutoff = host.Filter.cutoffFrequency;
                 host.BaseEnabled = host.Filter.enabled; host.BaseQ = host.Filter.lowpassResonanceQ;
             }
+        }
+        private static bool IsProtected(AudioSource source)
+            => source != null && (ProtectedWarnings.ContainsKey(source) ||
+                (SoundManager.i != null && source.outputAudioMixerGroup != null && source.outputAudioMixerGroup == SoundManager.i.MissileAlertMixer));
+        internal static void ProtectWarning(AudioSource source)
+        {
+            if (!Settings.Active || source == null) return;
+            if (!ProtectedWarnings.ContainsKey(source))
+            {
+                if (ProtectedWarnings.Count >= 512) return; // mixed-source guard remains the fallback
+                ProtectedWarnings.Add(source, source.bypassEffects);
+            }
+            source.bypassEffects = true;
         }
         internal static float? OwnHitDistance(Vector3 position)
         {
@@ -78,9 +99,11 @@ namespace KropClientEffects
             var camera = SceneSingleton<CameraStateManager>.i;
             if (camera == null) { RestoreAll(); return; }
             AudioHooks.DiscoverGroundAudio();
+            ExtendedAudioHooks.Tick();
             bool cockpit = AudioConfig.Cockpit.Value && InCockpit();
             string airframe = GameManager.GetLocalAircraft(out Aircraft local) && local?.definition != null ? local.definition.jsonKey : "";
             bool helicopter = airframe == "UtilityHelo1" || airframe == "AttackHelo1" || airframe == "Aryx_LightHelicopter1";
+            float cabinFraction = cockpit ? ReadOnlyCabinAcoustics.MuffleFraction(local) : 1f;
             float release = AudioConfig.Ejection.Value && !float.IsNegativeInfinity(ejectedAt)
                 ? Mathf.Clamp01((Time.unscaledTime - ejectedAt) / Mathf.Max(0.001f, AudioConfig.EjectionSeconds.Value)) : 0f;
             Remove.Clear();
@@ -88,18 +111,38 @@ namespace KropClientEffects
             {
                 HostState host = pair.Value;
                 if (host.Host == null) { Remove.Add(pair.Key); continue; }
-                host.Sources.RemoveAll(s => s.Source == null);
-                if (host.Sources.Count == 0) { Restore(host); Remove.Add(pair.Key); continue; }
+                for (int i = host.Sources.Count - 1; i >= 0; i--)
+                {
+                    SourceState tracked = host.Sources[i];
+                    if (tracked.Source != null && AudioRefinements.Enabled(tracked.Feature)) continue;
+                    if (tracked.Source != null) tracked.Source.bypassEffects = ProtectedWarnings.ContainsKey(tracked.Source) || tracked.Bypass;
+                    host.Sources.RemoveAt(i);
+                }
+                if (host.Sources.Count == 0)
+                {
+                    Restore(host);
+                    if (host.Created && host.Filter != null) UnityEngine.Object.Destroy(host.Filter);
+                    Remove.Add(pair.Key); continue;
+                }
                 // Audio filters affect every source on a GameObject. Skip mixed hosts rather
                 // than filtering an unrelated UI/RWR/voice source that shares the same object.
-                bool safe = true;
+                bool safe = host.Host.GetComponent<AudioListener>() == null;
                 Siblings.Clear();
                 host.Host.GetComponents(Siblings);
                 foreach (AudioSource sibling in Siblings)
                 {
+                    if (sibling == null) continue;
+                    if (IsProtected(sibling))
+                    {
+                        // Mixer routing identifies warnings even when their setup hook
+                        // was missed. Identification alone does not bypass a shared
+                        // AudioLowPassFilter: restore the host until they are exempt.
+                        if (!sibling.bypassEffects) { safe = false; break; }
+                        continue;
+                    }
                     bool registered = false;
                     foreach (SourceState state in host.Sources)
-                        if (state.Source == sibling) { registered = true; break; }
+                        if (state.Source == sibling && AudioRefinements.Enabled(state.Feature)) { registered = true; break; }
                     if (!registered) { safe = false; break; }
                 }
                 if (!safe) { Restore(host); continue; }
@@ -107,7 +150,7 @@ namespace KropClientEffects
                 bool anyPlaying = false;
                 foreach (var state in host.Sources)
                 {
-                    if (!state.Source.isPlaying) continue;
+                    if (!AudioRefinements.Enabled(state.Feature) || IsProtected(state.Source) || !state.Source.isPlaying) continue;
                     anyPlaying = true;
                     float distance = Vector3.Distance(state.Source.transform.position, camera.transform.position);
                     float atmospheric = EffectMath.AtmosphericCutoff(distance, AudioConfig.Atmosphere.Value,
@@ -121,10 +164,17 @@ namespace KropClientEffects
                         // An own-airframe strike is a transmitted local sound, not open-air distance absorption.
                         atmospheric = 22000f;
                     }
-                    float cabin = cockpit ? Mathf.Lerp(22000f, AudioConfig.CockpitCutoff.Value, fraction * (1f - release)) : 22000f;
+                    float cabin = cockpit ? Mathf.Lerp(22000f, AudioConfig.CockpitCutoff.Value, fraction * cabinFraction * (1f - release)) : 22000f;
                     cutoff = Mathf.Min(cutoff, Mathf.Min(atmospheric, cabin));
                 }
-                if (!anyPlaying || cutoff >= 21999f) { Restore(host); continue; }
+                if (anyPlaying) host.IdleSince = Time.unscaledTime;
+                if (!anyPlaying || cutoff >= 21999f)
+                {
+                    Restore(host);
+                    if (!anyPlaying && Time.unscaledTime - host.IdleSince > 30f)
+                    { if (host.Created && host.Filter != null) UnityEngine.Object.Destroy(host.Filter); Remove.Add(pair.Key); }
+                    continue;
+                }
                 if (host.Filter == null)
                 {
                     host.Filter = host.Host.AddComponent<AudioLowPassFilter>(); host.Created = true;
@@ -134,13 +184,19 @@ namespace KropClientEffects
                 host.LastCutoff = Mathf.Min(baseCutoff, cutoff);
                 host.Filter.cutoffFrequency = host.LastCutoff;
                 host.Filter.lowpassResonanceQ = 1f; // no resonant ringing against quiet engines
-                foreach (var state in host.Sources) if (state.Source != null) state.Source.bypassEffects = false;
+                foreach (var state in host.Sources) if (state.Source != null && !IsProtected(state.Source)) state.Source.bypassEffects = false;
             }
             foreach (var key in Remove) Hosts.Remove(key);
+            if (Time.unscaledTime >= nextWarningCleanup)
+            {
+                nextWarningCleanup = Time.unscaledTime + 2f; DeadWarnings.Clear();
+                foreach (var pair in ProtectedWarnings) if (pair.Key == null) DeadWarnings.Add(pair.Key);
+                foreach (var key in DeadWarnings) ProtectedWarnings.Remove(key);
+            }
         }
         private static void Restore(HostState host)
         {
-            foreach (var state in host.Sources) if (state.Source != null) state.Source.bypassEffects = state.Bypass;
+            foreach (var state in host.Sources) if (state.Source != null) state.Source.bypassEffects = ProtectedWarnings.ContainsKey(state.Source) || state.Bypass;
             if (host.Filter == null) return;
             if (host.Created) host.Filter.enabled = false;
             else
@@ -157,6 +213,9 @@ namespace KropClientEffects
             RestoreAll();
             foreach (var host in Hosts.Values) if (host.Created && host.Filter != null) UnityEngine.Object.Destroy(host.Filter);
             Hosts.Clear(); Siblings.Clear(); ejectedAt = float.NegativeInfinity;
+            foreach (var pair in ProtectedWarnings) if (pair.Key != null) pair.Key.bypassEffects = pair.Value;
+            ProtectedWarnings.Clear(); DeadWarnings.Clear(); nextWarningCleanup = 0f;
+            ReadOnlyCabinAcoustics.Clear(); ExtendedAudioHooks.Clear();
         }
     }
     internal static class AudioHooks
@@ -205,6 +264,7 @@ namespace KropClientEffects
         private static bool HostsDisabled() => !AudioConfig.Atmosphere.Value && !AudioConfig.Cockpit.Value;
         internal static void Apply(Harmony harmony)
         {
+            ExtendedAudioHooks.Apply(harmony);
             foreach (var spec in Specs)
             {
                 try

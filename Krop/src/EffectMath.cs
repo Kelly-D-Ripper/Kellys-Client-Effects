@@ -18,6 +18,14 @@ namespace KropClientEffects
         }
         internal static int BoatCount(float manpower, int crewPerBoat, int shipCap, int available)
             => Math.Max(0,Math.Min(available,Math.Min(shipCap,Math.Max(1,(int)Math.Ceiling((double)manpower/Math.Max(1,crewPerBoat))))));
+        // candidate is drawn from [0,count-1) when avoiding a valid previous slot.
+        internal static int NonRepeatingIndex(int candidate, int previous, int count, bool avoid)
+        {
+            if (count <= 1) return 0;
+            if (!avoid || previous < 0 || previous >= count) return Math.Max(0, Math.Min(count - 1, candidate));
+            int slot = Math.Max(0, Math.Min(count - 2, candidate));
+            return slot >= previous ? slot + 1 : slot;
+        }
     }
 }
 

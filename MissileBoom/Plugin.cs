@@ -4,23 +4,26 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Boscali.ExperimentalMissileBoom
 {
-    // Original independent experiment informed by KROP's feature description.
-    // No KROP implementation, samples, patches, or game-unit mutation are used.
-    [BepInPlugin("aaron.boscali.missile-unified", "Unified Experimental Missile Boom", "0.1.0")]
+    // Independent local trigger, with optional recordings from KROP 1.1.2.
+    // This never registers a missile with game simulation or delays native audio.
+    [BepInPlugin("aaron.boscali.missile-unified", "Unified Experimental Missile Boom", "0.1.1")]
     [BepInIncompatibility("aaron.boscali.missileboom")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private void Awake()
         {
             var setting = Config.Bind("Audio", "Missile sonic boom", false,
-                "Experimental local missile boom using the game's native sample. Original KROP suppresses this feature.");
+                "Local missile boom using a bounded approximate Mach-cone detector. No sound travel delay or changes to missile simulation.");
+            var recordings = Config.Bind("Audio", "KROP missile recordings", false,
+                "Use KROP's three missile-boom recordings without consecutive repeats. Requires Missile sonic boom; native audio is the fallback.");
             if (Application.isBatchMode || GameManager.IsHeadless || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return;
             var host = new GameObject("Unified missile boom runtime") { hideFlags = HideFlags.HideAndDontSave };
             DontDestroyOnLoad(host);
-            host.AddComponent<MissileBoomRuntime>().Initialize(setting, Logger);
+            host.AddComponent<MissileBoomRuntime>().Initialize(setting, recordings, Logger);
             Logger.LogInfo("Unified missile boom experiment loaded.");
         }
     }
@@ -30,16 +33,23 @@ namespace Boscali.ExperimentalMissileBoom
         private const float ScanPeriod = 0.5f;
         private const float SamplePeriod = 0.05f;
         private const float MaxDistance = 1200f;
+        private const int MaxPlaying = 8;
         private readonly Dictionary<Missile, State> tracked = new Dictionary<Missile, State>();
         private readonly List<Missile> remove = new List<Missile>();
         private readonly List<GameObject> audioObjects = new List<GameObject>();
-        private ConfigEntry<bool> enabledSetting;
+        private ConfigEntry<bool> enabledSetting, recordingsSetting;
+        private readonly MissileBoomClips recordings = new MissileBoomClips();
         private BepInEx.Logging.ManualLogSource log;
         private float nextScan, nextSample, lastSound = -100f;
-        private bool suppressed;
+        private bool suppressed, usedRecordings;
         private sealed class State { internal bool InCone; internal bool Heard; }
 
-        internal void Initialize(ConfigEntry<bool> setting, BepInEx.Logging.ManualLogSource logger) { enabledSetting = setting; log = logger; }
+        internal void Initialize(ConfigEntry<bool> setting, ConfigEntry<bool> customRecordings, BepInEx.Logging.ManualLogSource logger)
+        {
+            enabledSetting = setting; recordingsSetting = customRecordings; log = logger;
+            SceneManager.activeSceneChanged += SceneChanged;
+        }
+        private void SceneChanged(Scene previous, Scene current) { Clear(); }
 
         private void Update()
         {
@@ -62,6 +72,12 @@ namespace Boscali.ExperimentalMissileBoom
                 Clear(); return;
             }
             suppressed = false;
+            if (usedRecordings != recordingsSetting.Value)
+            {
+                StopSounds();
+                recordings.Clear();
+                usedRecordings = recordingsSetting.Value;
+            }
             CameraStateManager camera = SceneSingleton<CameraStateManager>.i;
             if (camera == null) { Clear(); return; }
             Vector3 listener = camera.mainCamera != null ? camera.mainCamera.transform.position : camera.transform.position;
@@ -123,7 +139,13 @@ namespace Boscali.ExperimentalMissileBoom
 
         private bool Play(Vector3 listener, Vector3 missilePosition, float distance)
         {
-            if (GameAssets.i == null || GameAssets.i.sonicBoom == null || SoundManager.i == null) return false;
+            if (SoundManager.i == null) return false;
+            audioObjects.RemoveAll(obj => obj == null);
+            if (audioObjects.Count >= MaxPlaying) return false;
+            AudioClip clip = recordingsSetting.Value ? recordings.Next(log) : null;
+            bool custom = clip != null;
+            if (clip == null) clip = GameAssets.i != null ? GameAssets.i.sonicBoom : null;
+            if (clip == null) return false;
             var obj = new GameObject("Experimental missile sonic boom");
             audioObjects.Add(obj);
             if (Datum.origin != null) obj.transform.SetParent(Datum.origin, false);
@@ -136,8 +158,8 @@ namespace Boscali.ExperimentalMissileBoom
             source.minDistance = 80f;
             source.maxDistance = MaxDistance;
             source.volume = 0.35f;
-            source.pitch = 1.25f;
-            source.clip = GameAssets.i.sonicBoom;
+            source.pitch = custom ? 1f : 1.25f;
+            source.clip = clip;
             source.Play();
             Destroy(obj, source.clip.length / source.pitch + 0.25f);
             return true;
@@ -147,11 +169,24 @@ namespace Boscali.ExperimentalMissileBoom
         {
             tracked.Clear();
             remove.Clear();
-            foreach (GameObject obj in audioObjects) if (obj != null) Destroy(obj);
+            StopSounds();
+            recordings.Clear();
+            nextScan = nextSample = 0f;
+            lastSound = -100f;
+        }
+
+        private void StopSounds()
+        {
+            foreach (GameObject obj in audioObjects) if (obj != null)
+            {
+                var source = obj.GetComponent<AudioSource>();
+                if (source != null) source.Stop();
+                Destroy(obj);
+            }
             audioObjects.Clear();
         }
 
-        private void OnDestroy() { Clear(); }
+        private void OnDestroy() { SceneManager.activeSceneChanged -= SceneChanged; Clear(); }
     }
 }
 

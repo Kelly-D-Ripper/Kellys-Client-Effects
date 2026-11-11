@@ -148,13 +148,14 @@ namespace KropClientEffects
     }
     internal sealed class LifeboatVisual : MonoBehaviour
     {
-        private float baseY,phase,beaconPhase;
+        private float baseY,phase,beaconPhase,beaconReadyAt;
         private readonly List<Tuple<Renderer,int>> lights=new List<Tuple<Renderer,int>>();
         private MaterialPropertyBlock block;
         private bool beaconWritten, previousBeaconOn;
         internal void Initialize()
         {
             baseY=transform.localPosition.y; phase=EffectRandom.Range(0f,Mathf.PI*2f); beaconPhase=EffectRandom.Range(0f,1.5f);
+            beaconReadyAt=Time.time+EffectRandom.Range(0f,5f);
             block=new MaterialPropertyBlock();
             foreach (var renderer in GetComponentsInChildren<MeshRenderer>())
             {
@@ -169,7 +170,8 @@ namespace KropClientEffects
             Vector3 position=transform.localPosition;
             position.y=baseY+(LifeboatConfig.Bob.Value?Mathf.Sin(Time.time*Mathf.PI*0.5f+phase)*0.08f:0f);
             transform.localPosition=position;
-            bool on=LifeboatConfig.Beacon.Value && (Time.time+beaconPhase)%1.5f<0.1f;
+            bool initialDelay=VisualRefinementSettings.DelayedBeacons != null && VisualRefinementSettings.DelayedBeacons.Value && Time.time<beaconReadyAt;
+            bool on=LifeboatConfig.Beacon.Value && !initialDelay && (Time.time+beaconPhase)%1.5f<0.1f;
             // The beacon changes only twice per cycle. Avoid repeated native renderer
             // property-block reads and writes every frame for every liferaft.
             if (beaconWritten && on == previousBeaconOn) return;

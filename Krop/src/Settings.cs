@@ -21,6 +21,7 @@ namespace KropClientEffects
             Logging = Toggle("00 General", "Diagnostic logging", false, "Log patch startup and unsupported audio hosts. Does not change multiplayer compatibility.");
             AudioConfig.Initialize(); BulletConfig.Initialize(); BoomConfig.Initialize();
             AirWakeConfig.Initialize(); ContrailConfig.Initialize(); LifeboatConfig.Initialize();
+            AudioRefinements.Initialize();
         }
     }
     internal static class VerboseLoggingConfig { internal static ConfigEntry<bool> Enabled => Settings.Logging; }

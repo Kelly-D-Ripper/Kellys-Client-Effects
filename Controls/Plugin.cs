@@ -136,6 +136,8 @@ namespace ClientEffectsControlPanel
                     }
                     break;
                 case 1:
+                    Toggle(Krop, "08 Visual refinements", "KROP water wakes", "KROP fast-pass spray (replaces Boscali)");
+                    GUILayout.Label("KROP needs Air wake effects: fixed-wing only, normally over 400 km/h and below 30 m. Keep it off for Boscali's rotorcraft and slower-flight spray/wash.");
                     if (configs.ContainsKey(Weather))
                     {
                         Toggle(Weather, "Weather", "OceanWavesEnabled", "Ocean waves");
@@ -221,12 +223,37 @@ namespace ClientEffectsControlPanel
                     Toggle(Krop, "01 Audio filters", "Ejection filter release", "Fade cockpit filter after ejection");
                     Toggle(Krop, "01 Audio filters", "Own-aircraft impact filtering", "Own-aircraft impact filtering");
                     Toggle(Krop, "01 Audio filters", "Helicopter turbine treatment", "Helicopter turbine treatment");
+                    Toggle(Krop, "01 Audio filters", "Canopy-aware muffling", "Muffling follows canopy opening and loss");
+                    Toggle(Krop, "01 Audio filters", "Open-cabin muffling", "Open-cabin muffling for Ibis door guns");
                     Toggle(Krop, "02 Bullet near misses", "Bullet cracks", "Bullet near-miss cracks");
                     Toggle(Krop, "02 Bullet near misses", "Large-round camera shake", "Large-round camera shake");
+                    Toggle(Krop, "02 Bullet near misses", "KROP crack shaping", "KROP bullet crack sound shaping");
                     Toggle(Krop, "03 Aircraft sonic booms", "Replacement aircraft booms", "Aircraft sonic booms");
                     Toggle(Krop, "03 Aircraft sonic booms", "Retrigger suppression", "Suppress repeated aircraft booms");
+                    Toggle(Krop, "03 Aircraft sonic booms", "Avoid repeated samples", "Avoid repeating aircraft boom recordings");
                     Toggle(Boscali, "Audio", "Cockpit voice warnings", "Cockpit voice warnings");
-                    Toggle(Boom, "Audio", "Missile sonic boom", "Experimental missile sonic booms (mission restart)");
+                    Toggle(Boom, "Audio", "Missile sonic boom", "Experimental missile sonic booms");
+                    Toggle(Boom, "Audio", "KROP missile recordings", "KROP missile recordings (requires missile booms)");
+                    GUILayout.Label("Additional sound filtering uses the cockpit / distant muffling switches above. Each source group is optional.");
+                    Toggle(Krop, "08 Additional audio", "Turbine startup", "Filter turbine startup sounds");
+                    Toggle(Krop, "08 Additional audio", "Engine fires", "Filter engine fire sounds");
+                    Toggle(Krop, "08 Additional audio", "Split airbrakes", "Filter split airbrakes");
+                    Toggle(Krop, "08 Additional audio", "Airframe scrapes", "Filter airframe scraping");
+                    Toggle(Krop, "08 Additional audio", "Ground and ship launchers", "Filter ground and ship launchers");
+                    Toggle(Krop, "08 Additional audio", "VLS boosters", "Filter VLS booster sounds");
+                    Toggle(Krop, "08 Additional audio", "Lasers", "Filter laser sounds");
+                    Toggle(Krop, "08 Additional audio", "Ship engines", "Filter ship engines");
+                    Toggle(Krop, "08 Additional audio", "World ambience", "Filter world ambience");
+                    Toggle(Krop, "08 Additional audio", "Escape capsules", "Filter escape capsules");
+                    Toggle(Krop, "08 Additional audio", "Lift intake doors", "Filter lift intake doors");
+                    Toggle(Krop, "08 Additional audio", "Missile startup", "Filter missile startup sounds");
+                    Toggle(Krop, "08 Additional audio", "Missile motors and flight", "Filter missile motors and fly-bys");
+                    Toggle(Krop, "08 Additional audio", "Pylon releases", "Filter weapon release sounds");
+                    Toggle(Krop, "08 Additional audio", "Warhead effects", "Filter warhead explosion sounds");
+                    Toggle(Krop, "08 Additional audio", "Canopy jettison", "Filter canopy jettison sounds");
+                    Toggle(Krop, "08 Additional audio", "Ejection seats", "Filter ejection-seat sounds");
+                    Toggle(Krop, "08 Additional audio", "Countermeasure ejection", "Filter flare and chaff release sounds");
+                    Toggle(Krop, "08 Additional audio", "Fuel ignition", "Filter fuel ignition sounds");
                     break;
                 case 6:
                     Toggle(Boscali, "Impact marks", "Enabled", "Impact scorch decals");
@@ -234,6 +261,13 @@ namespace ClientEffectsControlPanel
                     Toggle(Krop, "07 Cosmetic lifeboats", "Lifeboats", "Lifeboats from sinking ships");
                     Toggle(Krop, "07 Cosmetic lifeboats", "Gentle bobbing", "Lifeboat bobbing");
                     Toggle(Krop, "07 Cosmetic lifeboats", "Blinking beacons", "Lifeboat beacons");
+                    Toggle(Krop, "08 Visual refinements", "Delayed lifeboat beacons", "Stagger initial lifeboat beacon activation");
+                    Toggle(Krop, "08 Visual refinements", "Varied fuel explosions", "Varied fuel explosions (visual only)");
+                    Toggle(Krop, "08 Visual refinements", "Fuel explosion audio", "Extra fuel explosion sound (requires varied explosions)");
+                    Toggle(Krop, "08 Visual refinements", "Extended burning embers", "Longer-lived moving embers (requires varied explosions)");
+                    Slider(Krop, "08 Visual refinements", "Fuel explosion chance", "Extra fuel explosion chance", 0f, 1f);
+                    Slider(Krop, "08 Visual refinements", "Fuel effect lifetime seconds", "Fuel effect lifetime (seconds)", 3f, 45f);
+                    Slider(Krop, "08 Visual refinements", "Fuel effect maximum distance m", "Fuel effect range (m)", 250f, 12000f);
                     GUILayout.Label("Lifeboats are local visual decorations; they do not simulate rescue or crew.");
                     break;
             }

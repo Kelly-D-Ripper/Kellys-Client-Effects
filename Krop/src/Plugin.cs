@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace KropClientEffects
 {
-    [BepInPlugin(Guid, "Unified Client Effects: KROP", "0.1.1")]
+    [BepInPlugin(Guid, "Unified Client Effects: KROP", "0.2.0")]
     [BepInIncompatibility("pavehog727.qolrealismfixes")]
     [BepInIncompatibility("aaron.krop.client-effects")]
     public sealed class Plugin : BaseUnityPlugin
@@ -19,6 +19,7 @@ namespace KropClientEffects
         {
             Log = Logger;
             Settings.Initialize(Config);
+            VisualRefinementSettings.Initialize();
             if (Application.isBatchMode || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null || GameManager.IsHeadless)
             {
                 Logger.LogInfo("Client effects inactive on headless/batch process.");
@@ -39,13 +40,14 @@ namespace KropClientEffects
             AudioHooks.Apply(harmony);
             AircraftBooms.Apply(harmony);
             Patches.MissileContrailPatch.ApplyManualPatch(harmony);
-            Logger.LogInfo("Unified KROP client effects 0.1.1 local test build: presentation-only hooks loaded.");
+            Logger.LogInfo("Unified KROP client effects 0.2.0 candidate: optional presentation-only hooks loaded.");
         }
         internal static void ClearScene()
         {
             AudioFilters.Clear(); VisualObjects.Clear(); LocalLifeboats.Clear();
             BulletCracks.Clear(); AircraftBooms.Clear();
             Patches.ContrailEffectPatch.ClearAll(); Patches.AirWakeEffectPatch.ClearAll();
+            VisualRefinements.Clear();
         }
     }
     // The game's scene transitions can dispose objects owned by the loader manager.
@@ -67,6 +69,7 @@ namespace KropClientEffects
             cleared = false;
             LocalLifeboats.Tick();
             VisualObjects.Tick();
+            VisualRefinements.Tick();
         }
         private void LateUpdate() { if (Settings.Active) AudioFilters.Tick(); }
         private void OnDestroy()

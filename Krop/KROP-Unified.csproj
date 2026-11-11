@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion>
     <AssemblyName>KROP.UnifiedEffects</AssemblyName><RootNamespace>KropClientEffects</RootNamespace>
-    <Version>0.1.3</Version><Deterministic>true</Deterministic><NuGetAudit>false</NuGetAudit>
+    <Version>0.2.0</Version><Deterministic>true</Deterministic><NuGetAudit>false</NuGetAudit>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
     <BepInExPath>$(NUCLEAR_OPTION_DIR)\BepInEx\core</BepInExPath>
   </PropertyGroup>

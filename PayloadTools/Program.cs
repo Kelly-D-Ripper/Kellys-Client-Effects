@@ -4,14 +4,15 @@ using System.Text.Json;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-if (args.Length != 2) throw new ArgumentException("Usage: PayloadTools <pinned 0.8.2 client ZIP> <payload output directory>");
+if (args.Length != 3) throw new ArgumentException("Usage: PayloadTools <pinned 0.8.2 client ZIP> <payload output directory> <rebuilt module directory>");
 const string ExpectedZipHash = "2E32299574AD599BBB01A7966D965D069FDDDF7B15676C8235AA01570C9BFC5F";
 const string RootAssembly = "BoscaliUnifiedWeather";
 const string BundleResource = "UnifiedEffects.realisticnight_fx";
 const string Prefix = "BepInEx/plugins/UnifiedEffects/";
-var rootVersion = new Version(0, 8, 3, 0);
+var rootVersion = new Version(0, 8, 4, 0);
 var zipPath = Path.GetFullPath(args[0]);
 var output = Path.GetFullPath(args[1]);
+var rebuilt = Path.GetFullPath(args[2]);
 string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes));
 if (Hash(File.ReadAllBytes(zipPath)) != ExpectedZipHash) throw new InvalidDataException("Baseline ZIP SHA256 mismatch.");
 Directory.CreateDirectory(output);
@@ -32,7 +33,14 @@ var manifests = new List<object>();
 foreach (var relative in names)
 {
     var original = Bytes(relative); var changes = new List<string>();
-    using var assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(original));
+    byte[] source = original;
+    if (relative is "KROP/KROP.UnifiedEffects.dll" or "Missile/Boscali.UnifiedMissileBoom.dll" or "Controls/ClientEffectsControlPanel.dll")
+    {
+        source = File.ReadAllBytes(Path.Combine(rebuilt, Path.GetFileName(relative)));
+        changes.Add("Rebuilt optional client-effects module; SHA256 " + Hash(source));
+    }
+    using var assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(source));
+    if (!ReferenceEquals(source, original) && assembly.Name.Name != Path.GetFileNameWithoutExtension(relative)) throw new InvalidDataException("Unexpected replacement assembly identity: " + relative);
     var module = assembly.MainModule;
     if (relative.StartsWith("Core/") || relative.StartsWith("Controls/"))
     {
@@ -54,7 +62,7 @@ foreach (var relative in names)
             }
             if (replaced != 0) changes.Add(method.FullName + " - registry getter calls: " + replaced);
         }
-        var expectedMethods = relative.StartsWith("Core/") ? 2 : 1;
+        var expectedMethods = relative.StartsWith("Core/") ? 2 : 2; // rebuilt Controls note plus one redirected method
         if (changes.Count != expectedMethods) throw new InvalidDataException("Unexpected number of registry consumers: " + relative);
     }
     if (relative == "Lighting/RealisticNight.Unified.dll")
@@ -122,7 +130,7 @@ foreach (var relative in names)
         changes.Add(ensure.FullName + " - load pinned embedded bundle instead of Assembly.Location");
         changes.Add(helper.FullName + " - resource reader with finally cleanup");
     }
-    byte[] prepared = original;
+    byte[] prepared = source;
     if (changes.Count != 0)
     {
         using var stream = new MemoryStream(); assembly.Write(stream); prepared = stream.ToArray();
@@ -145,7 +153,7 @@ var manifest = new { baseline = Path.GetFileName(zipPath), baselineSha256 = Expe
     privateRegistry = "UnifiedEffects.ModuleRegistry.GetPluginInfos", bundleResource = BundleResource,
     bundleSha256 = Hash(bundle), bundleBytes = bundle.Length, modules = manifests };
 File.WriteAllText(Path.Combine(output,"payload-manifest.json"),JsonSerializer.Serialize(manifest,new JsonSerializerOptions { WriteIndented=true })+"\n");
-Console.WriteLine("Prepared 8 private modules from pinned 0.8.2. Only Core/Controls registry calls and Better Night embedded-bundle loading changed.");
+Console.WriteLine("Prepared 8 private modules with rebuilt KROP, missile and control components; pinned legacy assets retained.");
 
 static IEnumerable<TypeDefinition> Flatten(IEnumerable<TypeDefinition> types) =>
     types.SelectMany(t => new[] { t }.Concat(Flatten(t.NestedTypes)));

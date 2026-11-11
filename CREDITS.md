@@ -23,11 +23,13 @@ The complete Better Night build source has not yet been assembled here. See [SOU
 [KROP](https://github.com/KcTries/KROP) provides the following effects through a client-only extraction:
 
 - **Aircraft and missile contrails:** Separate switches, emitter limits and cleanup fixes were added for the pack.
-- **Low-flight dust and air wakes:** Extracted with their own controls. Ocean spray is handled by the Boscali-derived effect.
-- **Lifeboats:** Cosmetic boats appear locally when ships sink. We added limits, cleanup and toggle handling. They are not networked rescue units.
-- **Sound:** Cockpit and atmospheric muffling, bullet near-miss cracks and aircraft sonic booms, with controls, cleanup and allocation fixes.
+- **Low-flight dust and air wakes:** Extracted with their own controls. Boscali ocean spray remains the default; an optional KROP water-wake mode replaces it while enabled.
+- **Lifeboats:** Cosmetic boats appear locally when ships sink. We added limits, cleanup and toggle handling, plus an optional initial beacon delay matching KROP's timing. They are not networked rescue units.
+- **Sound:** Cockpit and atmospheric muffling, bullet near-miss cracks and aircraft sonic booms, with controls, cleanup and allocation fixes. The 0.8.4 candidate adds optional filtering for 19 more sound families, read-only canopy/open-cabin acoustics, and optional KROP bullet-crack shaping. Listener and missile-warning protections are adapted as safety fixes.
+- **Varied fuel explosions:** The optional fireball, smoke, flame and ember presentation follows KROP's effect. Our implementation copies only allowlisted particle-rendering and audio properties into new local objects. It does not instantiate the original gameplay prefab or copy its damage, physics or network components.
+- **Missile boom recordings:** Three KROP recordings are available as an optional sound choice. The detector remains Kelly's bounded local experiment, with the game's original recording available as fallback.
 
-KROP's NVG effects, nuclear flash effects and added sound-propagation delay are not included. The optional missile sonic boom is a separate Kelly's experiment inspired by KROP's feature description; it does not use KROP's implementation or samples.
+KROP's NVG effects, nuclear-triggered NVG speckles and added sound-propagation delay are not included. Neither are its ammunition, projectile, countermeasure-physics, AI-control or destructive canopy changes. Optional non-repeating boom selection is our refinement; the original KROP selector can repeat samples.
 
 ## Kelly's additions and changes
 

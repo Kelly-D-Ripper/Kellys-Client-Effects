@@ -149,7 +149,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
             bool wavesEnabled = state == GameState.SinglePlayer && settings.Enabled.Value && settings.OceanWavesEnabled.Value;
             // Release first so native water cannot inherit the replacement shader's stale swell height.
             if (!wavesEnabled) Release();
-            if (settings.SeaSprayEnabled.Value)
+            if (settings.SeaSprayEnabled.Value && !UnifiedEffects.KropWaterWakeBridge.Active)
                 spray.Tick(camera, Datum.LocalSeaY, WaveHeight, true, dt);
             else spray.Reset();
 

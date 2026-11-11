@@ -10,7 +10,7 @@ namespace KropClientEffects
 {
     internal static class LocalAudio
     {
-        internal static void Play(AudioSource template,AudioClip clip,Vector3 position,float volume,float? minDistance=null,float? maxDistance=null,float? pitch=null)
+        internal static void Play(AudioSource template,AudioClip clip,Vector3 position,float volume,float? minDistance=null,float? maxDistance=null,float? pitch=null,bool shapeCrack=false)
         {
             if (clip==null) return;
             GameObject obj=VisualObjects.Create("Audio","audio",64);
@@ -24,6 +24,12 @@ namespace KropClientEffects
             source.minDistance=minDistance??(template!=null?template.minDistance:3f);
             source.maxDistance=maxDistance??(template!=null?template.maxDistance:150f);
             source.spread=template!=null?template.spread:0f;
+            if (shapeCrack)
+            {
+                var highpass = obj.AddComponent<AudioHighPassFilter>();
+                highpass.cutoffFrequency = 4000f; highpass.highpassResonanceQ = 1f;
+                obj.AddComponent<CrackTransient>().Initialize(source, highpass, clip.length / Mathf.Max(0.01f, Mathf.Abs(source.pitch)));
+            }
             source.clip=clip; AudioFilters.Register(source); source.Play();
             UnityEngine.Object.Destroy(obj,clip.length/Mathf.Max(0.01f,Mathf.Abs(source.pitch))+0.25f);
         }
@@ -48,7 +54,7 @@ namespace KropClientEffects
             float pitch=EffectMath.CaliberPitch(info!=null?info.massPerRound:0f,BulletConfig.SmallPitch.Value,BulletConfig.LargePitch.Value);
             float massFraction=info!=null?Mathf.Clamp01((Mathf.Log(Mathf.Max(0.04f,info.massPerRound))-Mathf.Log(0.04f))/(Mathf.Log(50f)-Mathf.Log(0.04f))):0.5f;
             float volume=Mathf.Lerp(BulletConfig.SmallVolume.Value,BulletConfig.LargeVolume.Value,massFraction);
-            LocalAudio.Play(null,BulletCrackAssets.Clip,closest.ToLocalPosition(),volume,pitch:pitch+EffectRandom.Range(-0.15f,0.15f));
+            LocalAudio.Play(null,BulletCrackAssets.Clip,closest.ToLocalPosition(),volume,pitch:pitch+EffectRandom.Range(-0.15f,0.15f),shapeCrack:AudioRefinements.CrackShaping.Value);
             if (BulletConfig.Shake.Value && pitch<BulletConfig.ShakePitchThreshold.Value)
             {
                 var camera=SceneSingleton<CameraStateManager>.i;
@@ -62,6 +68,7 @@ namespace KropClientEffects
         private sealed class State { internal Unit Unit; internal float Last=float.NegativeInfinity; }
         private static ConditionalWeakTable<AudioSource,State> Sources=new ConditionalWeakTable<AudioSource,State>();
         private static AudioClip[] near,far;
+        private static int lastNear = -1, lastFar = -1;
         private static readonly MethodInfo OriginalPlay=AccessTools.Method(typeof(AudioSource),"PlayOneShot",new[]{typeof(AudioClip),typeof(float)});
         internal static void Apply(Harmony harmony)
         {
@@ -101,7 +108,12 @@ namespace KropClientEffects
             float distance=manager!=null?Vector3.Distance(source.transform.position,manager.transform.position):0f;
             bool distant=distance>=BoomConfig.FarDistance.Value;
             var pool=distant?far:near;
-            AudioClip replacement=pool[EffectRandom.Range(0,pool.Length)]??clip;
+            int previous = distant ? lastFar : lastNear;
+            bool avoid = AudioRefinements.AvoidRepeatedBooms.Value;
+            int range = avoid && previous >= 0 && previous < pool.Length && pool.Length > 1 ? pool.Length - 1 : pool.Length;
+            int index = EffectMath.NonRepeatingIndex(EffectRandom.Range(0,range), previous, pool.Length, avoid);
+            if (distant) lastFar = index; else lastNear = index;
+            AudioClip replacement=pool[index]??clip;
             LocalAudio.Play(source,replacement,source.transform.position,source.volume*volumeScale*BoomConfig.Volume.Value,
                 distant?(float?)BoomConfig.FarDistance.Value:null,
                 distant?(float?)Mathf.Max(BoomConfig.FarDistance.Value+1f,BoomConfig.FarMaxDistance.Value):null);
@@ -121,7 +133,25 @@ namespace KropClientEffects
                 stream.CopyTo(data); return WavUtility.ToAudioClip(data.ToArray(),name);
             }
         }
-        internal static void Clear() { Sources=new ConditionalWeakTable<AudioSource,State>(); }
+        internal static void Clear() { Sources=new ConditionalWeakTable<AudioSource,State>(); lastNear = lastFar = -1; }
+    }
+    internal sealed class CrackTransient : MonoBehaviour
+    {
+        private AudioSource source;
+        private AudioHighPassFilter highpass;
+        private float halfEnd;
+        internal void Initialize(AudioSource value, AudioHighPassFilter filter, float duration)
+        { source = value; highpass = filter; halfEnd = Time.unscaledTime + duration * 0.5f; }
+        private void Update()
+        {
+            if (!AudioRefinements.CrackShaping.Value)
+            {
+                if (highpass != null) { highpass.enabled = false; Destroy(highpass); }
+                Destroy(this); return;
+            }
+            if (Time.unscaledTime >= halfEnd)
+            { if (source != null) source.Stop(); Destroy(gameObject); }
+        }
     }
 }
 

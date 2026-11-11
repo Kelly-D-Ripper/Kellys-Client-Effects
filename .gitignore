@@ -4,3 +4,6 @@
 *.user
 *.pdb
 *.cfg
+/evidence/
+/dist/
+/staging/

@@ -1,36 +1,25 @@
-# Client Effects & Weather 0.8.3 - single-plugin candidate
+# Client Effects & Weather 0.8.4 - candidate
 
-One effects entry. The mod menu can stop looking like a shopping receipt.
+More optional effects. Still one entry in the mod menu.
 
-The complete 0.8.2 effects pack, including grounded runway lighting and NOAtmoFX 1.4 support, now lives in one main DLL. Its eight supporting modules and night-lighting asset are embedded inside it. DOORMAN sees one Client Effects & Weather entry without needing special grouping code.
+This candidate adds the approved client-side KROP effects to the complete 0.8.3 pack. Open FX on the map MFD or press Ctrl + F8. All 29 new switches start off, so updating does not suddenly turn everything up to eleven.
 
-## Upgrade
+- Sound: Additional cockpit/distance filtering for 19 sound families, canopy/open-cabin acoustics, bullet-crack shaping, optional missile recordings and non-repeating aircraft booms.
+- Battlefield: Extra fuel fireballs, smoke, flames and embers, optional cook-off audio, and delayed lifeboat beacons. The extra explosions are decorative and do not add damage.
+- Ocean: Optional KROP fast-pass spray for fixed-wing aircraft, normally over 400 km/h and below 30 m. Requires Air wake effects and replaces all Boscali aircraft spray/foam wash while enabled. Keep it off for Boscali's rotorcraft and slower-flight effects. Switching off restores your existing Boscali spray preference.
 
-1. Close Nuclear Option.
-2. Move the old `BepInEx/plugins/UnifiedEffects` folder somewhere outside `BepInEx/plugins` as a backup. Remove any duplicate older copies of the pack from other plugin folders too.
-3. Extract this ZIP into the game folder. Keep both its `plugins` and `patchers` files.
-4. Keep your existing `BepInEx/config` files. The original effect settings and shortcuts still work.
+The sound and visual additions are optional. Audio-listener and missile-warning protections are applied while the relevant module is active.
 
-Do not extract over the old multi-DLL pack and leave its components behind. The new plugin declares them incompatible to prevent duplicate effects.
+No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. NVG changes and general sound-propagation delay remain excluded. Weather/time commands retain their single-player restriction. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
 
-The download contains:
+## Install only when ready to test
 
-- `BepInEx/plugins/UnifiedEffects/UnifiedEffects.dll` - the complete effects plugin.
-- `BepInEx/patchers/UnifiedEffectsStartup.dll` - the small early loader helper for optional NOAtmoFX lifetime protection. It is not a DOORMAN menu item.
-- This README, including credits and original licence notices below.
+Close Nuclear Option. Back up and move the old BepInEx/plugins/UnifiedEffects folder outside plugins, then extract the candidate into the game folder. Keep your existing configs and the separately installed NOAtmoFX folder. Remove duplicate old pack DLLs rather than leaving both versions to fight over the same effects.
 
-Open FX on the map MFD or press Ctrl + F8. The effects switches, MET OFFICE, Simple / Technical names and time controls are unchanged. Weather/time commands remain single-player only.
+The ZIP contains only BepInEx and this README. Its two runtime files are the main UnifiedEffects.dll and the existing small startup helper under BepInEx/patchers. DOORMAN still sees one pack entry.
 
-## NOAtmoFX is separate
+[NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) remains an optional separate download and is not included.
 
-[Download NOAtmoFX 1.4.0](https://github.com/paulleonard1314-lang/NoAtmoFX/releases/tag/1.4.0) separately and install its DLL and matching shader bundle together. It is not included here. Keep its folder when replacing Unified Effects.
+Checked in isolated missions at 3440x1440 and 1920x1080, including NOAtmoFX 1.4.0 and DOORMAN. This is a local candidate, not an installed or published update. Real multiplayer, longer performance runs and your flight/audio check are still outstanding. See VALIDATION-0.8.4.md in the source for the evidence. No FPS improvement is claimed.
 
-The weather page still offers Vanilla / Enhanced / Volumetric and the add-on's quality and feature controls. NOAtmoFX remains its own DOORMAN entry. Its author documents a one-time defaults reset when upgrading the add-on to 1.4.
-
-## Candidate limits
-
-This is a packaging and startup change, not an FPS claim. Isolated mission tests exercise the effects, settings and the installed DOORMAN's actual inventory. Live multiplayer synchronization, sustained frame-time testing and human flight acceptance across every airfield remain open. The five-lamp approach chase and approximate PAPI are not a surveyed FAA installation.
-
-The pack does not add NVG changes or the general speed-of-sound delay. Cockpit voice warnings remain optional and default off for fresh settings.
-
-[Full credits and changes](CREDITS.md) | [Source notes](SOURCE-NOTES.md)
+[Credits and changes](CREDITS.md) | [Source notes](SOURCE-NOTES.md)
