@@ -12,6 +12,7 @@ namespace BoscaliClientExperimental.Weather
     internal sealed class CockpitVoiceWarnings : MonoBehaviour
     {
         private ConfigEntry<bool> enabledSetting;
+        private ConfigEntry<bool> pullUp, terrain, overG, bingo;
         private readonly WarningMath rules = new WarningMath();
         private readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();
         private AudioSource source;
@@ -23,6 +24,10 @@ namespace BoscaliClientExperimental.Weather
             var controller = Plugin.EffectsHost.AddComponent<CockpitVoiceWarnings>();
             controller.enabledSetting = plugin.Config.Bind("Audio", "Cockpit voice warnings", false,
                 "Ownship PULL UP, TERRAIN, OVER G and BINGO. Client-only, plays immediately; generated voice assets require provenance review.");
+            controller.pullUp = plugin.Config.Bind("Audio", "Pull up warning", true, "Added PULL UP speech. Requires Cockpit voice warnings; native warnings are unchanged.");
+            controller.terrain = plugin.Config.Bind("Audio", "Terrain warning", true, "Added TERRAIN speech. Requires Cockpit voice warnings; native warnings are unchanged.");
+            controller.overG = plugin.Config.Bind("Audio", "Over G warning", true, "Added OVER G speech. Requires Cockpit voice warnings; native warnings are unchanged.");
+            controller.bingo = plugin.Config.Bind("Audio", "Bingo warning", true, "Added BINGO fuel speech. Requires Cockpit voice warnings; native warnings are unchanged.");
         }
         private void Update()
         {
@@ -38,6 +43,8 @@ namespace BoscaliClientExperimental.Weather
                 bound = null; return;
             }
             if (bound != aircraft) { StopWarning(); bound = aircraft; rules.Reset(); }
+            if (!IsEnabled(playing)) StopWarning();
+            rules.SetFeatures(pullUp.Value, terrain.Value, overG.Value, bingo.Value);
             if (source == null)
             {
                 source = gameObject.AddComponent<AudioSource>();
@@ -69,6 +76,9 @@ namespace BoscaliClientExperimental.Weather
             if (source != null && source.isPlaying) source.Stop();
             playing = Warning.None;
         }
+        private bool IsEnabled(Warning warning) => warning == Warning.None ||
+            (warning == Warning.PullUp ? pullUp.Value : warning == Warning.Terrain ? terrain.Value :
+             warning == Warning.OverG ? overG.Value : bingo.Value);
         private AudioClip GetClip(string name)
         {
             if (clips.TryGetValue(name, out AudioClip clip)) return clip;

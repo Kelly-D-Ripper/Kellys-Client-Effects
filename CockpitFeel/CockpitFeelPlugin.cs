@@ -44,7 +44,9 @@ namespace BoscaliCockpitFeel
     {
         internal static FeelRuntime Live;
         private ConfigEntry<bool> headOn, shakeOn, machOn, comfort, glowOn, floodOn, damageOn;
-        private ConfigEntry<float> headStrength, shakeStrength;
+        private ConfigEntry<bool> groundRollOn, recoilOn, touchdownOn, gearOn;
+        private ConfigEntry<bool> transonicOn, sonicJoltOn;
+        private ConfigEntry<float> headStrength, shakeStrength, groundRollStrength;
         private readonly HeadMotion head = new HeadMotion();
         private readonly CockpitShake shake = new CockpitShake();
         private readonly CockpitCameraOffset offset = new CockpitCameraOffset();
@@ -64,7 +66,14 @@ namespace BoscaliCockpitFeel
             headStrength = config.Bind(section, "Head inertia strength", 1f, new ConfigDescription("Head movement strength.", new AcceptableValueRange<float>(0f, 2f)));
             shakeOn = config.Bind(section, "Cockpit shake", true, "Cockpit recoil, touchdown, landing gear and ground vibration.");
             shakeStrength = config.Bind(section, "Cockpit shake strength", 1f, new ConfigDescription("Shake strength.", new AcceptableValueRange<float>(0f, 2f)));
+            groundRollOn = config.Bind(section, "Ground roll vibration", true, "Runway vibration during taxi, takeoff and landing roll. Requires Cockpit shake and cockpit view; this is camera motion, not controller force feedback.");
+            groundRollStrength = config.Bind(section, "Ground roll vibration strength", 1f, new ConfigDescription("Runway vibration multiplier. Cockpit shake strength and Comfort motion also apply.", new AcceptableValueRange<float>(0f, 3f)));
+            recoilOn = config.Bind(section, "Gun recoil", true, "Added cockpit gun recoil. Requires Cockpit shake.");
+            touchdownOn = config.Bind(section, "Touchdown jolts", true, "Added cockpit landing impulse. Requires Cockpit shake.");
+            gearOn = config.Bind(section, "Landing gear jolts", true, "Small cockpit impulse as the landing gear locks. Requires Cockpit shake.");
             machOn = config.Bind(section, "Mach buffet", true, "Transonic buffeting and crossing impulse; independent of other shake.");
+            transonicOn = config.Bind(section, "Transonic vibration", true, "Continuous vibration near the speed of sound. Requires Mach buffet.");
+            sonicJoltOn = config.Bind(section, "Sonic crossing jolt", true, "Small rotational impulse when crossing the sound barrier. Requires Mach buffet; no audio delay.");
             comfort = config.Bind(section, "Comfort motion", false, "Reduce added camera motion to one quarter.");
             glowOn = config.Bind(section, "Instrument glow", true, "Night glow on verified cockpit display slots.");
             floodOn = config.Bind(section, "Cockpit night lighting", true, "Warm local cockpit floodlight at night.");
@@ -95,6 +104,8 @@ namespace BoscaliCockpitFeel
             float dt = Time.deltaTime > .25f ? 0f : Mathf.Clamp(Time.deltaTime, 0f, .05f);
             head.Step(dt, headStrength.Value, headOn.Value, comfort: comfort.Value);
             float mach = next.speed / ImmersionMath.SpeedOfSound(next.transform.GlobalPosition().y);
+            shake.SetFeatures(groundRollOn.Value, recoilOn.Value, touchdownOn.Value, gearOn.Value, groundRollStrength.Value);
+            shake.SetMachFeatures(transonicOn.Value, sonicJoltOn.Value);
             shake.Tick(next, true, shakeOn.Value, machOn.Value, shakeStrength.Value, mach, 0f, 0f, dt);
             Vector3 angles = headOn.Value ? head.AnglesDeg : Vector3.zero;
             angles.z = -angles.z;

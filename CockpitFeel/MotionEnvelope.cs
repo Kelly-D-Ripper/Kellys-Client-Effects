@@ -85,6 +85,12 @@ namespace BoscaliSummer.Modules.Immersion.Domain
 
         public void ResetMach() { machPrimed = machArmed = false; outsideSide = 0; lastCrossing = -100f; Sonic = 0f; }
         private void ResetGear() { gearPrimed = gearMoving = false; gearDirection = 0; GearLock = 0f; }
+        public void DisableExtra(bool recoil, bool touchdown, bool gear)
+        {
+            if (!recoil) Recoil = 0f;
+            if (!touchdown) Landing = 0f;
+            if (!gear) ResetGear();
+        }
         public void ClearExtra() { Recoil = Landing = 0f; ResetGear(); }
         public void Reset() { ClearExtra(); ResetMach(); }
     }

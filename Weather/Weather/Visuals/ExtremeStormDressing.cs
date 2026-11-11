@@ -37,15 +37,23 @@ namespace BoscaliSummer.Modules.Weather.Visuals
         private int cursor;
         private Transform origin;
         private bool failed;
+        private bool cloudDeckEnabled = true;
 
         public string EffectId => "extreme-storm";
         internal bool DeckApplied => deckApplied;
         internal int MistParticles => mist != null ? mist.particleCount : 0;
 
+        internal void SetCloudDeckEnabled(bool enabled)
+        {
+            cloudDeckEnabled = enabled;
+            if (!enabled) RestoreDeck();
+        }
+
         internal void Tick(LevelInfo level, Camera camera, bool enabled, bool mistEnabled, float dt)
         {
             if (!enabled || level == null || camera == null || Datum.origin == null) { ReleaseFx(); return; }
-            ApplyDeck(level);
+            if (cloudDeckEnabled) ApplyDeck(level);
+            else RestoreDeck();
             if (!mistEnabled || camera.transform.position.y < Datum.LocalSeaY - 1f) { ReleaseMist(); return; }
             if (origin != Datum.origin) ReleaseMist();
             if (!EnsureMist()) return;

@@ -23,6 +23,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
         private Transform simulationFrame;
         private Vector3 previousCameraPosition;
         private bool positioned;
+        private bool streaksEnabled = true, mistEnabled = true;
         private Color fogTint = new Color(0.62f, 0.66f, 0.72f, 1f);
 
         public string EffectId => "streaks";
@@ -123,10 +124,22 @@ namespace BoscaliSummer.Modules.Weather.Visuals
             fogTint = fog;
         }
 
+        internal void ConfigureFeatures(bool streaksOn, bool mistOn)
+        {
+            // Streaks and mist share a blended emitter. Flush its short-lived old mode
+            // when either is disabled, then only the enabled contribution may resume.
+            if (ps != null && ((!streaksOn && streaksEnabled) || (!mistOn && mistEnabled)))
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            streaksEnabled = streaksOn;
+            mistEnabled = mistOn;
+        }
+
         public void UpdateRain(
             Vector3 aircraftVelocity, Vector3 worldWind, float rainIntensity, Camera currentCam,
             float density = 1f, float gust = 1f, float lightLevel = 1f, float cloudMist = 0f)
         {
+            if (!streaksEnabled) rainIntensity = 0f;
+            if (!mistEnabled) cloudMist = 0f;
             // Inside cloud the same streaks become fine mist: hanging droplets (no fall), paler
             // and fainter than rain, so speed reads inside an otherwise featureless murk.
             float mist = Mathf.Clamp01(cloudMist) * 0.55f;

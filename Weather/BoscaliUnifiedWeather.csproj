@@ -6,7 +6,7 @@
     <NoWarn>$(NoWarn);CS0649</NoWarn>
     <AssemblyName>BoscaliUnifiedWeather</AssemblyName>
     <RootNamespace>BoscaliUnifiedWeather</RootNamespace>
-    <Version>0.8.5</Version>
+    <Version>0.8.6</Version>
     <Deterministic>true</Deterministic>
     <NuGetAudit>false</NuGetAudit>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
+    <Compile Include="../Shared/AdditionalEffectControls.cs" Link="Shared/AdditionalEffectControls.cs" />
     <Compile Include="UnifiedEffects/**/*.cs" />
     <EmbeddedResource Include="../Payloads/*.dll" LogicalName="UnifiedEffects.Modules.%(Filename)%(Extension)" />
     <Compile Include="WeatherNetDisabled.cs" />

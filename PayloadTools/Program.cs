@@ -9,7 +9,7 @@ const string ExpectedZipHash = "2E32299574AD599BBB01A7966D965D069FDDDF7B15676C82
 const string RootAssembly = "BoscaliUnifiedWeather";
 const string BundleResource = "UnifiedEffects.realisticnight_fx";
 const string Prefix = "BepInEx/plugins/UnifiedEffects/";
-var rootVersion = new Version(0, 8, 5, 0);
+var rootVersion = new Version(0, 8, 6, 0);
 var zipPath = Path.GetFullPath(args[0]);
 var output = Path.GetFullPath(args[1]);
 var rebuilt = Path.GetFullPath(args[2]);
@@ -34,7 +34,7 @@ foreach (var relative in names)
 {
     var original = Bytes(relative); var changes = new List<string>();
     byte[] source = original;
-    if (relative is "KROP/KROP.UnifiedEffects.dll" or "Missile/Boscali.UnifiedMissileBoom.dll" or "Controls/ClientEffectsControlPanel.dll")
+    if (relative is "Core/BoscaliUnified.dll" or "KROP/KROP.UnifiedEffects.dll" or "CockpitAudio/Boscali.CockpitAudio.dll" or "CockpitFeel/Boscali.CockpitFeel.dll" or "Missile/Boscali.UnifiedMissileBoom.dll" or "Controls/ClientEffectsControlPanel.dll")
     {
         source = File.ReadAllBytes(Path.Combine(rebuilt, Path.GetFileName(relative)));
         changes.Add("Rebuilt optional client-effects module; SHA256 " + Hash(source));
@@ -62,8 +62,9 @@ foreach (var relative in names)
             }
             if (replaced != 0) changes.Add(method.FullName + " - registry getter calls: " + replaced);
         }
-        var expectedMethods = relative.StartsWith("Core/") ? 2 : 2; // rebuilt Controls note plus one redirected method
-        if (changes.Count != expectedMethods) throw new InvalidDataException("Unexpected number of registry consumers: " + relative);
+        var expectedMethods = relative.StartsWith("Core/") ? 2 : 1;
+        if (changes.Count(change => change.Contains(" - registry getter calls: ")) != expectedMethods)
+            throw new InvalidDataException("Unexpected number of registry consumers: " + relative);
     }
     if (relative == "Lighting/RealisticNight.Unified.dll")
     {

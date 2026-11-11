@@ -12,6 +12,7 @@ namespace UnifiedEffects
         private static readonly Dictionary<string, PluginInfo> modules = new Dictionary<string, PluginInfo>(StringComparer.Ordinal);
         private static readonly Dictionary<string, PluginInfo> available = new Dictionary<string, PluginInfo>(StringComparer.Ordinal);
         private static int externalCount = -1;
+        internal static IEnumerable<PluginInfo> PrivateModules => modules.Values;
 
         internal static void Register(BaseUnityPlugin module)
         {

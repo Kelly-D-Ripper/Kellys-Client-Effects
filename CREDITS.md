@@ -12,6 +12,8 @@ This pack is built from the work of several modders, with changes made for Kelly
 - **Cockpit:** The pilot body, kneeboard, motion, visor reflections, glare, cockpit lighting, breathing and airframe sounds come from Boscali. We extracted them into individually switchable features and made compatibility and cleanup changes. Cockpit voice warnings can be switched off and default to off for new configurations.
 - **Impact marks:** The scorch and impact decals come from Boscali, with added limits and cleanup. They are visual marks, not terrain-deforming craters.
 
+The 0.8.6 control audit adds finer switches to these adapted effects, preserves their master switches, and exposes the private modules to F1 Configuration Manager. Ground-roll strength, individual cockpit sounds and warnings, storm layers, sky phenomena and ocean-wake layers now have their own controls. This changes the pack's controls and cleanup, not the original authorship of the effects.
+
 ## Better Night - Julmari
 
 Better Night provides the base for the city windows, street lights, vehicle lights and other night lighting. We integrated its controls, disabled its NVG-specific changes and adjusted street-light size, brightness and visibility at altitude and above clouds.
@@ -28,6 +30,8 @@ The complete Better Night build source has not yet been assembled here. See [SOU
 - **Sound:** Cockpit and atmospheric muffling, bullet near-miss cracks and aircraft sonic booms, with controls, cleanup and allocation fixes. The 0.8.4 candidate adds optional filtering for 19 more sound families, read-only canopy/open-cabin acoustics, and optional KROP bullet-crack shaping. Listener and missile-warning protections are adapted as safety fixes.
 - **Varied fuel explosions:** The optional fireball, smoke, flame and ember presentation follows KROP's effect. Our implementation copies only allowlisted particle-rendering and audio properties into new local objects. It does not instantiate the original gameplay prefab or copy its damage, physics or network components.
 - **Missile boom recordings:** Three KROP recordings are available as an optional sound choice. The detector remains Kelly's bounded local experiment, with the game's original recording available as fallback.
+
+In 0.8.6, near-miss camera shake was separated from the bullet-crack sound switch, so disabling the sound no longer silently disables the shake.
 
 The 0.8.5 candidate adds optional KROP-inspired NVG phosphors, bloom, grain/static, sensor speckles, nuclear-triggered speckles, rendered-brightness gain and raise/lower animation. Kelly's adaptation separates the switches, defaults them off, restores owned rendering state and bounds textures, readbacks and overlay resources. A separate camera-choice guard prevents the game's automatic NVG selection by default without changing the saved game preference.
 

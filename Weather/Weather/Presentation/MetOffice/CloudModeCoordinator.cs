@@ -84,6 +84,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
                 addon=info.Instance;api=candidate;setEnabled=enable;setFeature=feature;getFeature=featureGet;setPreset=preset;isEnabled=enabled;apiReady=readyProperty;currentPreset=current;weatherSource=candidate.GetProperty("WeatherSource",flags);followingHost=candidate.GetProperty("FollowingHost",flags);presets=names;
                 initialEnabled=Read<bool>(isEnabled,false);ready=true;reason="";
                 EffectsSettingsCache.Register(Id,addon.Config);
+                UnifiedEffects.NoAtmoConfigurationDrawers.Attach(this,addon.Config,log);
                 log.LogInfo("Optional NOAtmoFX "+version+" public API connected; add-on owns its weather and settings.");
             }
             catch(Exception ex){ready=false;api=null;reason="NOATMOFX API UNAVAILABLE";log.LogWarning("NOAtmoFX integration unavailable: "+ex.GetBaseException().Message);}
@@ -149,6 +150,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         }
         private void OnDestroy()
         {
+            UnifiedEffects.NoAtmoConfigurationDrawers.Detach(this);
             if(AddonReady && hasWrite && Read<bool>(isEnabled,!lastWritten)==lastWritten && lastWritten!=initialEnabled)WriteEnabled(initialEnabled);
             if(Live==this)Live=null;
         }

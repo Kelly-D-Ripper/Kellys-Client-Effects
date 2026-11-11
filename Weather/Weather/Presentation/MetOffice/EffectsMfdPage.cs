@@ -20,7 +20,7 @@ namespace BoscaliSummer.Modules.Weather.Presentation
         }
         private const string Boscali="aaron.boscali.unified", Krop="aaron.boscali.krop-unified", Night="aaron.boscali.betternight", Weather="aaron.boscali.weather-unified", Boom="aaron.boscali.missile-unified", CockpitAudio="aaron.boscali.cockpit-audio", CockpitFeel="aaron.boscali.cockpitfeel", Airfield="aaron.boscali.airfield-lighting", NoAtmo="paul.no.clouds";
         private static readonly string[] Names={"WEATHER","OCEAN","COCKPIT","TRAILS","LIGHTS","SOUND","BATTLEFIELD"};
-        internal static readonly Item[] Items={
+        private static readonly Item[] BaseItems={
             new Item(0, "Toggle", Weather, "Weather", "ConsoleKeyOFallback", "O / Ctrl+O weather shortcut (disable if O conflicts)"),
             new Item(0, "Toggle", Weather, "Weather", "Enabled", "Boscali weather system"),
             new Item(0, "Toggle", Weather, "Weather", "RainVisualsEnabled", "Rain visuals"),
@@ -204,6 +204,19 @@ namespace BoscaliSummer.Modules.Weather.Presentation
             new Item(7, "Slider", NoAtmo, "Atmosphere", "LightShafts", "Light shafts", 0f, 2f),
             new Item(7, "Downscale", NoAtmo, "Quality", "Downscale", "Render downscale", 1f, 4f),
         };
+        internal static readonly Item[] Items=CreateItems();
+        private static Item[] CreateItems()
+        {
+            var extra=UnifiedEffects.ControlsCatalog.AdditionalEffectControls.Items;
+            var result=new Item[BaseItems.Length+extra.Length];
+            Array.Copy(BaseItems,result,BaseItems.Length);
+            for(int i=0;i<extra.Length;i++)
+            {
+                var item=extra[i];
+                result[BaseItems.Length+i]=new Item(item.Category,item.Kind,item.Plugin,item.Section,item.Key,item.Label,item.Min,item.Max);
+            }
+            return result;
+        }
         private readonly List<Item> visible=new List<Item>();
         private readonly Button[] categories=new Button[7], rows=new Button[9], minus=new Button[9], plus=new Button[9];
         private readonly Func<RectTransform,string,float,float,float,float,Action,Button> button;

@@ -26,10 +26,33 @@ namespace BoscaliSummer.Modules.Weather.Visuals
         private float night;
         private uint seed = 1u;
         private int emitted;
+        private bool auroraEnabled = true, redSpritesEnabled = true, blueJetsEnabled = true;
+        private readonly ParticleSystem.Particle[] transientParticles = new ParticleSystem.Particle[SpriteMax];
 
         internal float AuroraLevel { get; private set; }
         internal int SpritesFired { get; private set; }
         internal int AuroraParticles => aurora != null ? aurora.particleCount : 0;
+
+        internal void ConfigureFeatures(bool auroraOn, bool redSpritesOn, bool blueJetsOn)
+        {
+            if (!auroraOn)
+            {
+                AuroraLevel = 0f;
+                if (aurora != null) aurora.Clear();
+            }
+            // Both transient colours share one bounded system. Remove only the disabled
+            // type so changing one switch never cancels the other effect's live particles.
+            if (sprites != null && ((!redSpritesOn && redSpritesEnabled) || (!blueJetsOn && blueJetsEnabled)))
+            {
+                int count = sprites.GetParticles(transientParticles), alive = 0;
+                for (int i = 0; i < count; i++)
+                    if (transientParticles[i].randomSeed == 1u ? blueJetsOn : redSpritesOn)
+                        transientParticles[alive++] = transientParticles[i];
+                sprites.SetParticles(transientParticles, alive);
+            }
+            auroraEnabled = auroraOn; redSpritesEnabled = redSpritesOn; blueJetsEnabled = blueJetsOn;
+            if (!auroraOn && !redSpritesOn && !blueJetsOn) Reset();
+        }
 
         /// <param name="sunUp">The sun direction's height, -1..1 (below the horizon is negative).</param>
         /// <param name="clearSky">0..1, how open the sky is around the camera.</param>
@@ -40,7 +63,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
             seed = missionSeed;
             // 0 by day, 1 once the sun is ~8 degrees down (civil dusk keeps the sky too bright for either).
             night = WeatherMath.Smoothstep(-0.02f, -0.14f, sunUp);
-            float target = night * Mathf.Clamp01(auroraNight) * WeatherMath.Smoothstep(0.25f, 0.75f, clearSky);
+            float target = auroraEnabled ? night * Mathf.Clamp01(auroraNight) * WeatherMath.Smoothstep(0.25f, 0.75f, clearSky) : 0f;
             AuroraLevel = Mathf.MoveTowards(AuroraLevel, target, Time.deltaTime * 0.05f);
             bool spritesLive = sprites != null && sprites.particleCount > 0;
             if (AuroraLevel <= 0.001f && !spritesLive && (aurora == null || aurora.particleCount == 0))
@@ -71,6 +94,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
             float roll = WeatherMath.Hash01(strike.Seed, 3, 7);
             bool jet = roll < 0.015f;
             if (!jet && roll > 0.07f) return;
+            if (jet ? !blueJetsEnabled : !redSpritesEnabled) return;
             if (!Ensure()) return;
             if (!root.activeSelf) root.SetActive(true);
             int count = jet ? 1 : 2 + (int)(WeatherMath.Hash01(strike.Seed, 4, 7) * 4f);
@@ -92,6 +116,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
                     startLifetime = WeatherMath.HashRange(strike.Seed, 9, i, 0, 0.14f, 0.32f),
                     // Deep red: with more green/blue (0.22/0.30, first live capture) the crown washed out to pinkish white.
                     startColor = jet ? new Color(0.35f, 0.55f, 1f, 1f) : new Color(1f, 0.12f, 0.18f, 1f),
+                    randomSeed = jet ? 1u : 2u,
                     applyShapeToPosition = false,
                 };
                 sprites.Emit(p, 1);

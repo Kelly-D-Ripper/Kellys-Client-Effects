@@ -9,7 +9,7 @@ namespace BoscaliSummer.Modules.Immersion.Audio
 {
     /// <summary>
     /// Oxygen-mask breathing, anti-G straining grunts, G-suit hiss and heartbeat, paced by
-    /// <see cref="PilotPhysiology"/> cues. Three pooled 2D voices on the effects mixer, so vanilla's
+    /// <see cref="PilotPhysiology"/> cues. Five pooled 2D voices on the effects mixer, so vanilla's
     /// G-LOC master low-pass muffles them for free. Clips are baked once off the main thread;
     /// the per-frame path only reads cue flags. Grunts, gasps, the wake-up breath and the heartbeat are
     /// embedded recordings (Assets/Voice); mask breathing and the G-suit are synthesized.
@@ -20,7 +20,8 @@ namespace BoscaliSummer.Modules.Immersion.Audio
         private const int SoundCount = (int)BreathSound.Heart + 1;
         private readonly AudioClip[] clips = new AudioClip[SoundCount];
         private readonly System.Random rng = new System.Random(4041);
-        private AudioSource breath, effort, body;
+        private AudioSource breath, effort, body, heart, recovery;
+        private bool breathOn = true, strainOn = true, suitOn = true, heartOn = true, recoveryOn = true;
         private float[][] baked;
         private volatile int bakeState; // 0 pending, 1 ready, 2 failed
         private volatile bool released;
@@ -29,11 +30,22 @@ namespace BoscaliSummer.Modules.Immersion.Audio
         internal int Played { get; private set; }
         /// <summary>How many sounds came from embedded recordings rather than the synth (set when the bake finishes).</summary>
         internal int RecordedVoices { get; private set; }
-        internal bool IsPlaying => (breath != null && breath.isPlaying) || (effort != null && effort.isPlaying) || (body != null && body.isPlaying);
+        internal bool IsPlaying => (breath != null && breath.isPlaying) || (effort != null && effort.isPlaying) || (body != null && body.isPlaying) || (heart != null && heart.isPlaying) || (recovery != null && recovery.isPlaying);
+
+        public void SetFeatures(bool breathing, bool strain, bool suit, bool heartbeat, bool recoveryGasps)
+        {
+            breathOn = breathing; strainOn = strain; suitOn = suit; heartOn = heartbeat; recoveryOn = recoveryGasps;
+            // Each independently switchable sound owns a voice, so stopping one cannot cut off another.
+            if (!breathOn && breath != null && breath.isPlaying) breath.Stop();
+            if (!strainOn && effort != null && effort.isPlaying) effort.Stop();
+            if (!suitOn && body != null && body.isPlaying) body.Stop();
+            if (!heartOn && heart != null && heart.isPlaying) heart.Stop();
+            if (!recoveryOn && recovery != null && recovery.isPlaying) recovery.Stop();
+        }
 
         public void Initialize()
         {
-            breath = Voice(); effort = Voice(); body = Voice();
+            breath = Voice(); effort = Voice(); body = Voice(); heart = Voice(); recovery = Voice();
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
@@ -63,15 +75,15 @@ namespace BoscaliSummer.Modules.Immersion.Audio
             if ((cues & PilotCue.LostConsciousness) != 0) { breath.Stop(); effort.Stop(); }
             float e = p.Exertion01;
             float breathVolume = Mathf.Lerp(.07f, .45f, e); // cruise sits under the engine
-            if ((cues & PilotCue.Inhale) != 0)
+            if (breathOn && (cues & PilotCue.Inhale) != 0)
                 Play(breath, p.Straining ? BreathSound.PressureInhale : Pick(BreathSound.Inhale0, 3), breathVolume, p.SegmentSeconds);
-            if ((cues & PilotCue.Exhale) != 0) Play(breath, Pick(BreathSound.Exhale0, 3), breathVolume * .9f, p.SegmentSeconds);
-            if ((cues & PilotCue.Grunt) != 0)
+            if (breathOn && (cues & PilotCue.Exhale) != 0) Play(breath, Pick(BreathSound.Exhale0, 3), breathVolume * .9f, p.SegmentSeconds);
+            if (strainOn && (cues & PilotCue.Grunt) != 0)
                 Play(effort, p.Ragged ? Pick(BreathSound.Gasp0, 2) : Pick(BreathSound.Keh0, 5), Mathf.Lerp(.35f, .6f, e), 0f, p.Ragged ? 1.08f : 1f);
-            if ((cues & PilotCue.RegainedConsciousness) != 0) Play(effort, BreathSound.Recovery, .55f, 0f);
-            if ((cues & PilotCue.GSuitInflate) != 0) Play(body, BreathSound.SuitInflate, .18f, 0f);
-            if ((cues & PilotCue.GSuitVent) != 0) Play(body, BreathSound.SuitVent, .15f, 0f);
-            if ((cues & PilotCue.Heartbeat) != 0) Play(body, BreathSound.Heart, .45f * p.Pulse01, 0f);
+            if (recoveryOn && (cues & PilotCue.RegainedConsciousness) != 0) Play(recovery, BreathSound.Recovery, .55f, 0f);
+            if (suitOn && (cues & PilotCue.GSuitInflate) != 0) Play(body, BreathSound.SuitInflate, .18f, 0f);
+            if (suitOn && (cues & PilotCue.GSuitVent) != 0) Play(body, BreathSound.SuitVent, .15f, 0f);
+            if (heartOn && (cues & PilotCue.Heartbeat) != 0) Play(heart, BreathSound.Heart, .45f * p.Pulse01, 0f);
         }
 
         public void TryRoute()
@@ -80,7 +92,7 @@ namespace BoscaliSummer.Modules.Immersion.Audio
             SoundManager sound = SoundManager.i;
             AudioMixerGroup group = sound != null ? sound.EffectsMixer : null;
             if (group == null) return;
-            breath.outputAudioMixerGroup = effort.outputAudioMixerGroup = body.outputAudioMixerGroup = group;
+            breath.outputAudioMixerGroup = effort.outputAudioMixerGroup = body.outputAudioMixerGroup = heart.outputAudioMixerGroup = recovery.outputAudioMixerGroup = group;
             routed = true;
         }
 
@@ -93,6 +105,8 @@ namespace BoscaliSummer.Modules.Immersion.Audio
             if (breath != null && breath.isPlaying) breath.Stop();
             if (effort != null && effort.isPlaying) effort.Stop();
             if (body != null && body.isPlaying) body.Stop();
+            if (heart != null && heart.isPlaying) heart.Stop();
+            if (recovery != null && recovery.isPlaying) recovery.Stop();
         }
 
         public void Release()
@@ -103,7 +117,9 @@ namespace BoscaliSummer.Modules.Immersion.Audio
             if (breath != null) Destroy(breath);
             if (effort != null) Destroy(effort);
             if (body != null) Destroy(body);
-            breath = effort = body = null;
+            if (heart != null) Destroy(heart);
+            if (recovery != null) Destroy(recovery);
+            breath = effort = body = heart = recovery = null;
             for (int i = 0; i < clips.Length; i++) { if (clips[i] != null) Destroy(clips[i]); clips[i] = null; }
             baked = null;
             ready = false;

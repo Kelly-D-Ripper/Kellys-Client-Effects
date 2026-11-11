@@ -293,6 +293,12 @@ namespace ClientEffectsControlPanel
                     GUILayout.Label("Lifeboats are local visual decorations; they do not simulate rescue or crew.");
                     break;
             }
+            foreach(var item in UnifiedEffects.ControlsCatalog.AdditionalEffectControls.Items)
+            {
+                if(item.Category!=tab)continue;
+                if(item.Kind=="Toggle")Toggle(item.Plugin,item.Section,item.Key,item.Label);
+                else if(item.Kind=="Slider")Slider(item.Plugin,item.Section,item.Key,item.Label,item.Min,item.Max);
+            }
             GUILayout.EndScrollView();
             if (GUILayout.Button("Close")) SetOpen(false);
             GUI.DragWindow(new Rect(0, 0, 10000, 24));

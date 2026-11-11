@@ -1,4 +1,4 @@
-param([string]$GameDir='C:\Program Files (x86)\Steam\steamapps\common\Nuclear Option', [switch]$LaunchOnly, [switch]$IncludeNoAtmo, [switch]$IncludeLegacyNoAtmo, [switch]$IncludeDoorman, [switch]$IncludeOtherMfdMods, [switch]$OmitStartup, [switch]$DisableUnifiedOnBoot, [ValidateRange(800,3840)][int]$Width=1920, [ValidateRange(600,2160)][int]$Height=1080)
+param([string]$GameDir='C:\Program Files (x86)\Steam\steamapps\common\Nuclear Option', [switch]$LaunchOnly, [switch]$IncludeNoAtmo, [switch]$IncludeLegacyNoAtmo, [switch]$IncludeDoorman, [switch]$IncludeConfigManager, [switch]$IncludeOtherMfdMods, [switch]$OmitStartup, [switch]$DisableUnifiedOnBoot, [ValidateRange(800,3840)][int]$Width=1920, [ValidateRange(600,2160)][int]$Height=1080)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $candidate=Split-Path -Parent $PSScriptRoot
@@ -67,6 +67,18 @@ if($IncludeDoorman) {
       @{schema=1;autoMatchServers=$false;disabledContent=@();disabledPlugins=@('aaron.boscali.weather-unified')} | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $bep 'config\doorman-mods.json') -Encoding UTF8
       Set-Content -LiteralPath (Join-Path $plugins 'Probe\unified-disabled.txt') -Value 'enabled' -Encoding ASCII
   }
+}
+if($IncludeConfigManager) {
+    $source=Join-Path $GameDir 'BepInEx\plugins\ConfigurationManager\ConfigurationManager.dll'
+    if((Hash $source) -ne '143BB25E8F03ED8728224DE0B72752DE29C0962FF69D20EC685831EC7491B323') {throw 'Installed Configuration Manager changed; review exact F1 test target.'}
+    $destination=Join-Path $plugins 'ConfigurationManager\ConfigurationManager.dll'
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
+    Copy-Item -LiteralPath $source -Destination $destination
+    $hashes['plugins/ConfigurationManager/ConfigurationManager.dll']=Hash $destination
+    # Deliberately seed isolated defaults, never copy or modify the player's F1 configuration.
+    $config="[Filtering]`nShow advanced = false`nShow keybinds = true`nShow settings = true`n`n[General]`nShow config manager = F1`nPlugin collapsed default = true`n"
+    Set-Content -LiteralPath (Join-Path $bep 'config\com.bepis.bepinex.configurationmanager.cfg') -Value $config -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $plugins 'Probe\configuration-manager.txt') -Value 'Configuration Manager 19.1 - F1 defaults' -Encoding ASCII
 }
 if($IncludeNoAtmo -or $IncludeLegacyNoAtmo) {
     $legacy='D:\NuclearOption-Codex-evidence\NoAtmoFX-test-only\BepInEx\plugins\NoAtmoFX'

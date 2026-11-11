@@ -13,7 +13,7 @@ using BoscaliSummer.Modules.Weather.Presentation;
 
 namespace BoscaliUnifiedWeather
 {
-    [BepInPlugin("aaron.boscali.weather-unified", "Client Effects & Weather", "0.8.5")]
+    [BepInPlugin("aaron.boscali.weather-unified", "Client Effects & Weather", "0.8.6")]
     [BepInIncompatibility("com.marci.boscalisummer")]
     [BepInIncompatibility("aaron.boscali.clouds-unified")]
     [BepInIncompatibility("aaron.boscali.unified")]
@@ -31,14 +31,17 @@ namespace BoscaliUnifiedWeather
     [BepInIncompatibility("aaron.clienteffects.controlpanel")]
     [BepInIncompatibility("com.leech.realisticnight")]
     [BepInDependency("paul.no.clouds", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.bepis.bepinex.configurationmanager", BepInDependency.DependencyFlags.SoftDependency)]
     public sealed class WeatherPlugin : BaseUnityPlugin
     {
         internal static BepInEx.Configuration.ConfigEntry<bool> SimpleNames;
+        private void OnDestroy() { UnifiedEffects.ConfigurationManagerBridge.Shutdown(); }
         private void Awake()
         {
             BoscaliSummer.Plugin.Logger = Logger;
             if (Application.isBatchMode || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null || GameManager.IsHeadless) return;
             UnifiedEffects.ModuleLoader.Initialize(Logger);
+            UnifiedEffects.ConfigurationManagerBridge.Initialize(Logger);
             GameAccess.Initialise();
             NOAvionics.AvStyleHost.Configure(Paths.ConfigPath, Logger.LogInfo, Logger.LogWarning);
             NOAvionics.AvBundle.Load(Logger.LogInfo);

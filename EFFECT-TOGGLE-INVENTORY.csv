@@ -1,0 +1,220 @@
+Category,Control,Kind,Owner,F1 section,F1 key,F1 visible,MFD reachable,MFD callback
+Weather,O / Ctrl+O weather shortcut (disable if O conflicts),Toggle,aaron.boscali.weather-unified,Weather,ConsoleKeyOFallback,True,True,clicked-and-restored
+Weather,Boscali weather system,Toggle,aaron.boscali.weather-unified,Weather,Enabled,True,True,clicked-and-restored
+Weather,Rain visuals,Toggle,aaron.boscali.weather-unified,Weather,RainVisualsEnabled,True,True,clicked-and-restored
+Weather,Rain density,Slider,aaron.boscali.weather-unified,Weather,RainDensity,True,True,numeric-or-choice-row-reachable
+Weather,Rain sound,Toggle,aaron.boscali.weather-unified,Weather,RainAudioEnabled,True,True,clicked-and-restored
+Weather,Canopy rain,Toggle,aaron.boscali.weather-unified,Weather,CanopyRainEnabled,True,True,clicked-and-restored
+Weather,Canopy runoff shader,Toggle,aaron.boscali.weather-unified,Weather,CanopyShaderEnabled,True,True,clicked-and-restored
+Weather,Wet terrain,Toggle,aaron.boscali.weather-unified,Weather,TerrainRainEnabled,True,True,clicked-and-restored
+Weather,Rain haze and atmosphere,Toggle,aaron.boscali.weather-unified,Weather,RainAtmosphereEnabled,True,True,clicked-and-restored
+Weather,Sun shafts,Toggle,aaron.boscali.weather-unified,Weather,SunShaftsEnabled,True,True,clicked-and-restored
+Weather,Sky phenomena,Toggle,aaron.boscali.weather-unified,Weather,SkyPhenomenaEnabled,True,True,clicked-and-restored
+Weather,Boscali dark nights,Toggle,aaron.boscali.weather-unified,Weather,DarkNightsEnabled,True,True,clicked-and-restored
+Weather,Boscali storm lightning,Toggle,aaron.boscali.weather-unified,Weather,LightningEnabled,True,True,clicked-and-restored
+Weather,Reduce Boscali flashes (native flashes unchanged),Toggle,aaron.boscali.weather-unified,Weather,ReducedFlashes,True,True,clicked-and-restored
+Weather,Cloud-passage camera shake,Toggle,aaron.boscali.weather-unified,Weather,CloudPassageShakeEnabled,True,True,clicked-and-restored
+Ocean,Ocean waves,Toggle,aaron.boscali.weather-unified,Weather,OceanWavesEnabled,True,True,clicked-and-restored
+Ocean,Aircraft sea spray and foam wakes,Toggle,aaron.boscali.weather-unified,Weather,SeaSprayEnabled,True,True,clicked-and-restored
+Ocean,KROP fast-pass spray (replaces Boscali),Toggle,aaron.boscali.krop-unified,08 Visual refinements,KROP water wakes,True,True,clicked-and-restored
+Cockpit,Allow game auto-NVG on camera change,Toggle,aaron.boscali.krop-unified,09 Night vision,Allow game auto NVG on camera change,True,True,clicked-and-restored
+Cockpit,NVG phosphor tint,Toggle,aaron.boscali.krop-unified,09 Night vision,Phosphor tint,True,True,clicked-and-restored
+Cockpit,NVG phosphor colour,Phosphor,aaron.boscali.krop-unified,09 Night vision,Phosphor colour,True,True,numeric-or-choice-row-reachable
+Cockpit,NVG bloom,Toggle,aaron.boscali.krop-unified,09 Night vision,NVG bloom,True,True,clicked-and-restored
+Cockpit,NVG bloom strength,Slider,aaron.boscali.krop-unified,09 Night vision,NVG bloom strength,True,True,numeric-or-choice-row-reachable
+Cockpit,NVG grain and static,Toggle,aaron.boscali.krop-unified,09 Night vision,NVG grain,True,True,clicked-and-restored
+Cockpit,NVG grain strength,Slider,aaron.boscali.krop-unified,09 Night vision,NVG grain strength,True,True,numeric-or-choice-row-reachable
+Cockpit,NVG bright speckles,Toggle,aaron.boscali.krop-unified,09 Night vision,NVG sparkles,True,True,clicked-and-restored
+Cockpit,NVG speckle count,IntSlider,aaron.boscali.krop-unified,09 Night vision,NVG speck count,True,True,numeric-or-choice-row-reachable
+Cockpit,Extra NVG speckles after nuclear flashes,Toggle,aaron.boscali.krop-unified,09 Night vision,Nuclear NVG speckles,True,True,clicked-and-restored
+Cockpit,NVG automatic brightness adjustment,Toggle,aaron.boscali.krop-unified,09 Night vision,NVG auto gain,True,True,clicked-and-restored
+Cockpit,NVG raise and lower animation,Toggle,aaron.boscali.krop-unified,09 Night vision,NVG transition,True,True,clicked-and-restored
+Cockpit,First-person pilot body,Toggle,aaron.boscali.unified,Immersion,PilotBodyEnabled,True,True,clicked-and-restored
+Cockpit,Pilot control and G-load motion,Toggle,aaron.boscali.unified,Immersion,PilotControlMotionEnabled,True,True,clicked-and-restored
+Cockpit,Pilot kneeboard (requires body),Toggle,aaron.boscali.unified,Immersion,KneeboardEnabled,True,True,clicked-and-restored
+Cockpit,Head inertia,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Head inertia,True,True,clicked-and-restored
+Cockpit,Head inertia strength,Slider,aaron.boscali.cockpitfeel,Cockpit Feel,Head inertia strength,True,True,numeric-or-choice-row-reachable
+Cockpit,Cockpit vibration and shake,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Cockpit shake,True,True,clicked-and-restored
+Cockpit,Cockpit shake strength,Slider,aaron.boscali.cockpitfeel,Cockpit Feel,Cockpit shake strength,True,True,numeric-or-choice-row-reachable
+Cockpit,Mach buffet,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Mach buffet,True,True,clicked-and-restored
+Cockpit,Comfort motion,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Comfort motion,True,True,clicked-and-restored
+Cockpit,Instrument glow,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Instrument glow,True,True,clicked-and-restored
+Cockpit,Cockpit night lighting,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Cockpit night lighting,True,True,clicked-and-restored
+Cockpit,Cockpit damage shading,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Cockpit damage shading,True,True,clicked-and-restored
+Cockpit,Helmet visor reflections,Toggle,aaron.boscali.unified,Immersion,HelmetVisor,True,True,clicked-and-restored
+Cockpit,Visor reflection strength,Slider,aaron.boscali.unified,Immersion,HelmetReflection,True,True,numeric-or-choice-row-reachable
+Cockpit,Sun glare,Toggle,aaron.boscali.unified,Immersion,SunGlare,True,True,clicked-and-restored
+Cockpit,Cockpit voice warnings (off by default),Toggle,aaron.boscali.unified,Audio,Cockpit voice warnings,True,True,clicked-and-restored
+Cockpit,Pilot breathing and G-suit sounds,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,PilotBreathing,True,True,clicked-and-restored
+Cockpit,Airframe creaks and stress sounds,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,AirframeCreaks,True,True,clicked-and-restored
+Cockpit,Canopy wind rush,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,CanopyWind,True,True,clicked-and-restored
+Cockpit,Gear and canopy cockpit cues,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,ControlFoley,True,True,clicked-and-restored
+Cockpit,Optional softer radar tones,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,SoftRadarTones,True,True,clicked-and-restored
+Trails,KROP client effects master,Toggle,aaron.boscali.krop-unified,00 General,Enable pack,True,True,clicked-and-restored
+Trails,Aircraft contrails,Toggle,aaron.boscali.krop-unified,05 Contrails,Aircraft contrails,True,True,clicked-and-restored
+Trails,Missile contrails,Toggle,aaron.boscali.krop-unified,05 Contrails,Missile contrails,True,True,clicked-and-restored
+Trails,Low-flight air wakes,Toggle,aaron.boscali.krop-unified,04 Low-flight wake,Air wake effects,True,True,clicked-and-restored
+Trails,Land dust,Toggle,aaron.boscali.krop-unified,04 Low-flight wake,Land dust,True,True,clicked-and-restored
+Lights,Better Night master,Toggle,aaron.boscali.betternight,1. General,Enabled,True,True,clicked-and-restored
+Lights,Night ambient lighting,Toggle,aaron.boscali.betternight,2. Night,Enabled,True,True,clicked-and-restored
+Lights,Night ambient strength,Slider,aaron.boscali.betternight,2. Night,Ambient Boost,True,True,numeric-or-choice-row-reachable
+Lights,Lit building windows,Toggle,aaron.boscali.betternight,3. Lights,City Windows,True,True,clicked-and-restored
+Lights,Window brightness,Slider,aaron.boscali.betternight,3. Lights,City Intensity,True,True,numeric-or-choice-row-reachable
+Lights,Vehicle lights,Toggle,aaron.boscali.betternight,3. Lights,Vehicle Lights,True,True,clicked-and-restored
+Lights,Other lights and beacons,Toggle,aaron.boscali.betternight,3. Lights,Other Lights,True,True,clicked-and-restored
+Lights,Street lights,Toggle,aaron.boscali.betternight,4. Street Lights,Enabled,True,True,clicked-and-restored
+Lights,Street lights in daylight,Toggle,aaron.boscali.betternight,4. Street Lights,Always On (ignore day/night),True,True,clicked-and-restored
+Lights,Street-light poles,Toggle,aaron.boscali.betternight,4. Street Lights,Poles,True,True,clicked-and-restored
+Lights,Street-light appearance,EnumChoice,aaron.boscali.betternight,4. Street Lights,Light Sources,True,True,numeric-or-choice-row-reachable
+Lights,Compact street lighting,Toggle,aaron.boscali.unified,Lighting,Compact street lighting,True,True,clicked-and-restored
+Lights,Ground light radius (m),Slider,aaron.boscali.unified,Lighting,Street pool radius,True,True,numeric-or-choice-row-reachable
+Lights,Ground light strength,Slider,aaron.boscali.unified,Lighting,Street pool brightness,True,True,numeric-or-choice-row-reachable
+Lights,Reduce street glow at altitude,Toggle,aaron.boscali.unified,Lighting,Reduce street glow at altitude,True,True,clicked-and-restored
+Lights,Reduce street glow above clouds,Toggle,aaron.boscali.unified,Lighting,Reduce street glow above clouds,True,True,clicked-and-restored
+Lights,Airfield and site lighting,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Enabled,True,True,clicked-and-restored
+Lights,Runway lights,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Runways,True,True,clicked-and-restored
+Lights,Sequenced approach strobes,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Approach strobes,True,True,clicked-and-restored
+Lights,Flash runway ends (nonstandard),Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Legacy flashing runway ends,True,True,clicked-and-restored
+Lights,Taxiway lights,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Taxiways,True,True,clicked-and-restored
+Lights,Hangar illumination,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Hangars,True,True,clicked-and-restored
+Lights,Helipad lights,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Helipads,True,True,clicked-and-restored
+Lights,Industrial and port lights,Toggle,aaron.boscali.airfield-lighting,Airfield lighting,Industrial and ports,True,True,clicked-and-restored
+Sound,World sound travel time,Toggle,aaron.boscali.krop-unified,09 Sound propagation,World sound delay,True,True,clicked-and-restored
+Sound,Engine sound travel time,Toggle,aaron.boscali.krop-unified,09 Sound propagation,Engine sound delay,True,True,clicked-and-restored
+Sound,Gun burst fade (requires world delay),Toggle,aaron.boscali.krop-unified,09 Sound propagation,Gun loop fade,True,True,clicked-and-restored
+Sound,Maximum sound delay (seconds),Slider,aaron.boscali.krop-unified,09 Sound propagation,Maximum delay seconds,True,True,numeric-or-choice-row-reachable
+Sound,Maximum delayed sounds,IntSlider,aaron.boscali.krop-unified,09 Sound propagation,Maximum delayed sounds,True,True,numeric-or-choice-row-reachable
+Sound,Maximum delayed engines,IntSlider,aaron.boscali.krop-unified,09 Sound propagation,Maximum engine sources,True,True,numeric-or-choice-row-reachable
+Sound,Pilot breathing and G-suit sounds,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,PilotBreathing,True,True,clicked-and-restored
+Sound,Airframe creaks and stress sounds,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,AirframeCreaks,True,True,clicked-and-restored
+Sound,Canopy wind rush,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,CanopyWind,True,True,clicked-and-restored
+Sound,Gear and canopy cockpit cues,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,ControlFoley,True,True,clicked-and-restored
+Sound,Optional softer radar tones,Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,SoftRadarTones,True,True,clicked-and-restored
+Sound,KROP client effects master,Toggle,aaron.boscali.krop-unified,00 General,Enable pack,True,True,clicked-and-restored
+Sound,Distant sound muffling,Toggle,aaron.boscali.krop-unified,01 Audio filters,Atmospheric muffling,True,True,clicked-and-restored
+Sound,Cockpit muffling,Toggle,aaron.boscali.krop-unified,01 Audio filters,First-person cockpit muffling,True,True,clicked-and-restored
+Sound,Reduced mechanical muffling,Toggle,aaron.boscali.krop-unified,01 Audio filters,Reduced mechanical muffling,True,True,clicked-and-restored
+Sound,Fade cockpit filter after ejection,Toggle,aaron.boscali.krop-unified,01 Audio filters,Ejection filter release,True,True,clicked-and-restored
+Sound,Own-aircraft impact filtering,Toggle,aaron.boscali.krop-unified,01 Audio filters,Own-aircraft impact filtering,True,True,clicked-and-restored
+Sound,Helicopter turbine treatment,Toggle,aaron.boscali.krop-unified,01 Audio filters,Helicopter turbine treatment,True,True,clicked-and-restored
+Sound,Muffling follows canopy opening and loss,Toggle,aaron.boscali.krop-unified,01 Audio filters,Canopy-aware muffling,True,True,clicked-and-restored
+Sound,Open-cabin muffling for Ibis door guns,Toggle,aaron.boscali.krop-unified,01 Audio filters,Open-cabin muffling,True,True,clicked-and-restored
+Sound,Bullet near-miss cracks,Toggle,aaron.boscali.krop-unified,02 Bullet near misses,Bullet cracks,True,True,clicked-and-restored
+Sound,Large-round camera shake,Toggle,aaron.boscali.krop-unified,02 Bullet near misses,Large-round camera shake,True,True,clicked-and-restored
+Sound,KROP bullet crack sound shaping,Toggle,aaron.boscali.krop-unified,02 Bullet near misses,KROP crack shaping,True,True,clicked-and-restored
+Sound,Aircraft sonic booms,Toggle,aaron.boscali.krop-unified,03 Aircraft sonic booms,Replacement aircraft booms,True,True,clicked-and-restored
+Sound,Suppress repeated aircraft booms,Toggle,aaron.boscali.krop-unified,03 Aircraft sonic booms,Retrigger suppression,True,True,clicked-and-restored
+Sound,Avoid repeating aircraft boom recordings,Toggle,aaron.boscali.krop-unified,03 Aircraft sonic booms,Avoid repeated samples,True,True,clicked-and-restored
+Sound,Cockpit voice warnings,Toggle,aaron.boscali.unified,Audio,Cockpit voice warnings,True,True,clicked-and-restored
+Sound,Experimental missile sonic booms,Toggle,aaron.boscali.missile-unified,Audio,Missile sonic boom,True,True,clicked-and-restored
+Sound,KROP recordings (requires missile booms),Toggle,aaron.boscali.missile-unified,Audio,KROP missile recordings,True,True,clicked-and-restored
+Sound,Filter turbine startup sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Turbine startup,True,True,clicked-and-restored
+Sound,Filter engine fire sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Engine fires,True,True,clicked-and-restored
+Sound,Filter split airbrakes,Toggle,aaron.boscali.krop-unified,08 Additional audio,Split airbrakes,True,True,clicked-and-restored
+Sound,Filter airframe scraping,Toggle,aaron.boscali.krop-unified,08 Additional audio,Airframe scrapes,True,True,clicked-and-restored
+Sound,Filter ground and ship launchers,Toggle,aaron.boscali.krop-unified,08 Additional audio,Ground and ship launchers,True,True,clicked-and-restored
+Sound,Filter VLS booster sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,VLS boosters,True,True,clicked-and-restored
+Sound,Filter laser sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Lasers,True,True,clicked-and-restored
+Sound,Filter ship engines,Toggle,aaron.boscali.krop-unified,08 Additional audio,Ship engines,True,True,clicked-and-restored
+Sound,Filter world ambience,Toggle,aaron.boscali.krop-unified,08 Additional audio,World ambience,True,True,clicked-and-restored
+Sound,Filter escape capsules,Toggle,aaron.boscali.krop-unified,08 Additional audio,Escape capsules,True,True,clicked-and-restored
+Sound,Filter lift intake doors,Toggle,aaron.boscali.krop-unified,08 Additional audio,Lift intake doors,True,True,clicked-and-restored
+Sound,Filter missile startup sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Missile startup,True,True,clicked-and-restored
+Sound,Filter missile motors and fly-bys,Toggle,aaron.boscali.krop-unified,08 Additional audio,Missile motors and flight,True,True,clicked-and-restored
+Sound,Filter weapon release sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Pylon releases,True,True,clicked-and-restored
+Sound,Filter warhead explosion sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Warhead effects,True,True,clicked-and-restored
+Sound,Filter canopy jettison sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Canopy jettison,True,True,clicked-and-restored
+Sound,Filter ejection-seat sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Ejection seats,True,True,clicked-and-restored
+Sound,Filter flare and chaff release sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Countermeasure ejection,True,True,clicked-and-restored
+Sound,Filter fuel ignition sounds,Toggle,aaron.boscali.krop-unified,08 Additional audio,Fuel ignition,True,True,clicked-and-restored
+Battlefield,Impact scorch decals,Toggle,aaron.boscali.unified,Impact marks,Enabled,True,True,clicked-and-restored
+Battlefield,KROP client effects master,Toggle,aaron.boscali.krop-unified,00 General,Enable pack,True,True,clicked-and-restored
+Battlefield,Lifeboats from sinking ships,Toggle,aaron.boscali.krop-unified,07 Cosmetic lifeboats,Lifeboats,True,True,clicked-and-restored
+Battlefield,Lifeboat bobbing,Toggle,aaron.boscali.krop-unified,07 Cosmetic lifeboats,Gentle bobbing,True,True,clicked-and-restored
+Battlefield,Lifeboat beacons,Toggle,aaron.boscali.krop-unified,07 Cosmetic lifeboats,Blinking beacons,True,True,clicked-and-restored
+Battlefield,Stagger initial lifeboat beacons,Toggle,aaron.boscali.krop-unified,08 Visual refinements,Delayed lifeboat beacons,True,True,clicked-and-restored
+Battlefield,Varied fuel explosions (visual only),Toggle,aaron.boscali.krop-unified,08 Visual refinements,Varied fuel explosions,True,True,clicked-and-restored
+Battlefield,Extra fuel explosion sound (requires varied),Toggle,aaron.boscali.krop-unified,08 Visual refinements,Fuel explosion audio,True,True,clicked-and-restored
+Battlefield,Longer-lived embers (requires varied),Toggle,aaron.boscali.krop-unified,08 Visual refinements,Extended burning embers,True,True,clicked-and-restored
+Battlefield,Extra fuel explosion chance,Slider,aaron.boscali.krop-unified,08 Visual refinements,Fuel explosion chance,True,True,numeric-or-choice-row-reachable
+Battlefield,Fuel effect lifetime (seconds),Slider,aaron.boscali.krop-unified,08 Visual refinements,Fuel effect lifetime seconds,True,True,numeric-or-choice-row-reachable
+Battlefield,Fuel effect range (m),Slider,aaron.boscali.krop-unified,08 Visual refinements,Fuel effect maximum distance m,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Quality preset,Preset,paul.no.clouds,Quality,Preset,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Volumetric clouds,Feature,paul.no.clouds,General,Enabled,True,True,clicked-and-restored
+NOAtmoFX,Cloud shadows,Feature,paul.no.clouds,Shadows,Shadows,True,True,clicked-and-restored
+NOAtmoFX,Distant rain curtains,Feature,paul.no.clouds,Atmosphere,RainShafts,True,True,clicked-and-restored
+NOAtmoFX,Rain near camera,Feature,paul.no.clouds,Atmosphere,NearRain,True,True,clicked-and-restored
+NOAtmoFX,NOAtmoFX lightning,Feature,paul.no.clouds,Atmosphere,Lightning,True,True,clicked-and-restored
+NOAtmoFX,NOAtmoFX turbulence,Feature,paul.no.clouds,Atmosphere,Turbulence,True,True,clicked-and-restored
+NOAtmoFX,Sun rays,Feature,paul.no.clouds,Atmosphere,GodRays,True,True,clicked-and-restored
+NOAtmoFX,Light shafts,Feature,paul.no.clouds,Atmosphere,LightShafts,True,True,clicked-and-restored
+NOAtmoFX,NOAtmoFX fog,Feature,paul.no.clouds,Atmosphere,Fog,True,True,clicked-and-restored
+NOAtmoFX,NOAtmoFX wet glass,Feature,paul.no.clouds,Glass,WetGlass,True,True,clicked-and-restored
+NOAtmoFX,Nuclear cloud effects,Feature,paul.no.clouds,Nuclear,Enabled,True,True,clicked-and-restored
+NOAtmoFX,Keep sun below clouds,Feature,paul.no.clouds,Lighting,KeepSunBelowClouds,True,True,clicked-and-restored
+NOAtmoFX,Rainbow,Feature,paul.no.clouds,Atmosphere,Rainbow,True,True,clicked-and-restored
+NOAtmoFX,Glory,Feature,paul.no.clouds,Atmosphere,Glory,True,True,clicked-and-restored
+NOAtmoFX,Valley fog,Feature,paul.no.clouds,Atmosphere,ValleyFog,True,True,clicked-and-restored
+NOAtmoFX,Mountain clouds,Feature,paul.no.clouds,Atmosphere,MountainCloud,True,True,clicked-and-restored
+NOAtmoFX,Follow Boscali weather,Toggle,paul.no.clouds,Integration,FollowBoscaliWeather,True,True,clicked-and-restored
+NOAtmoFX,Yield rain/fog to Boscali,Toggle,paul.no.clouds,Integration,YieldToBoscali,True,True,clicked-and-restored
+NOAtmoFX,Cloud transition minutes,Slider,paul.no.clouds,Weather,ChangeTime,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,NOAtmoFX cirrus,Toggle,paul.no.clouds,Weather,OwnCirrus,True,True,clicked-and-restored
+NOAtmoFX,Cirrus amount,Slider,paul.no.clouds,Weather,Cirrus,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Mid-level clouds,Slider,paul.no.clouds,Weather,MidLevel,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Overcast layer,Slider,paul.no.clouds,Layer,OvercastDeck,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Cumulus coverage,Slider,paul.no.clouds,Shape,CoverageScale,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Cloud density,Slider,paul.no.clouds,Shape,Density,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Cumulus shape,Slider,paul.no.clouds,Shape,Dome,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Billowing detail,Slider,paul.no.clouds,Shape,Billow,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Cloud blur,Slider,paul.no.clouds,Shape,Blur,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Humidity,Slider,paul.no.clouds,Weather,HumidityBias,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Storm instability,Slider,paul.no.clouds,Weather,InstabilityBias,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Weather front,Front,paul.no.clouds,Weather,Front,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Front distance km,Slider,paul.no.clouds,Weather,FrontDistanceKm,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Front width km,Slider,paul.no.clouds,Weather,FrontWidthKm,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Storm cloud top m,Slider,paul.no.clouds,Storm,CbTop,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Anvil width,Slider,paul.no.clouds,Storm,Anvil,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Supercell chance,Slider,paul.no.clouds,Storm,Supercells,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Rain cloud darkening,Slider,paul.no.clouds,Lighting,WetDarkening,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,NOAtmoFX lightning,Slider,paul.no.clouds,Atmosphere,Lightning,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Sun rays,Slider,paul.no.clouds,Atmosphere,GodRays,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Light shafts,Slider,paul.no.clouds,Atmosphere,LightShafts,True,True,numeric-or-choice-row-reachable
+NOAtmoFX,Render downscale,Downscale,paul.no.clouds,Quality,Downscale,True,True,numeric-or-choice-row-reachable
+Weather,Sun-disc colour and haze,Toggle,aaron.boscali.weather-unified,Weather,SunDiscEnabled,True,True,clicked-and-restored
+Weather,Aurora (sky phenomena master),Toggle,aaron.boscali.weather-unified,Weather,AuroraEnabled,True,True,clicked-and-restored
+Weather,Red sprites (sky phenomena master),Toggle,aaron.boscali.weather-unified,Weather,RedSpritesEnabled,True,True,clicked-and-restored
+Weather,Blue jets (sky phenomena master),Toggle,aaron.boscali.weather-unified,Weather,BlueJetsEnabled,True,True,clicked-and-restored
+Weather,Falling rain streaks (rain visuals master),Toggle,aaron.boscali.weather-unified,Weather,RainStreaksEnabled,True,True,clicked-and-restored
+Weather,Cloud-passage mist (rain visuals master),Toggle,aaron.boscali.weather-unified,Weather,CloudPassageMistEnabled,True,True,clicked-and-restored
+Weather,Extreme-storm thunder (rain sound master),Toggle,aaron.boscali.weather-unified,Weather,ThunderAudioEnabled,True,True,clicked-and-restored
+Weather,Extreme-storm thick cloud deck,Toggle,aaron.boscali.weather-unified,Weather,ExtremeStormCloudDeckEnabled,True,True,clicked-and-restored
+Weather,Extreme-storm ground mist (rain haze master),Toggle,aaron.boscali.weather-unified,Weather,ExtremeStormGroundMistEnabled,True,True,clicked-and-restored
+Weather,Extreme-storm visibility fog (rain haze master),Toggle,aaron.boscali.weather-unified,Weather,ExtremeStormFogEnabled,True,True,clicked-and-restored
+Ocean,Airborne ocean spray (spray master),Toggle,aaron.boscali.weather-unified,Weather,SeaSprayParticlesEnabled,True,True,clicked-and-restored
+Ocean,Ocean foam wakes (spray master),Toggle,aaron.boscali.weather-unified,Weather,SeaFoamWakeEnabled,True,True,clicked-and-restored
+Ocean,Ocean surface wash (spray + ocean waves),Toggle,aaron.boscali.weather-unified,Weather,SeaSurfaceWashEnabled,True,True,clicked-and-restored
+Cockpit,Ground-roll / takeoff vibration,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Ground roll vibration,True,True,clicked-and-restored
+Cockpit,Ground-roll vibration strength,Slider,aaron.boscali.cockpitfeel,Cockpit Feel,Ground roll vibration strength,True,True,numeric-or-choice-row-reachable
+Cockpit,Cockpit gun recoil,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Gun recoil,True,True,clicked-and-restored
+Cockpit,Touchdown jolts,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Touchdown jolts,True,True,clicked-and-restored
+Cockpit,Landing-gear lock jolts,Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Landing gear jolts,True,True,clicked-and-restored
+Cockpit,Transonic vibration (Mach buffet master),Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Transonic vibration,True,True,clicked-and-restored
+Cockpit,Sonic-crossing jolt (Mach buffet master),Toggle,aaron.boscali.cockpitfeel,Cockpit Feel,Sonic crossing jolt,True,True,clicked-and-restored
+Cockpit,Breathing cycles (breathing master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Breathing cycles,True,True,clicked-and-restored
+Cockpit,G-strain voice (breathing master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,G strain,True,True,clicked-and-restored
+Cockpit,G-suit hiss (breathing master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,G suit hiss,True,True,clicked-and-restored
+Cockpit,Heartbeat (breathing master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Heartbeat,True,True,clicked-and-restored
+Cockpit,Recovery gasps (breathing master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Recovery gasps,True,True,clicked-and-restored
+Cockpit,Structural creaks (airframe master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Structural creaks,True,True,clicked-and-restored
+Cockpit,Harness strain (airframe master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Harness strain,True,True,clicked-and-restored
+Cockpit,Impact sounds (airframe master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Impact foley,True,True,clicked-and-restored
+Cockpit,Gear-lever sound (control foley master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Gear lever,True,True,clicked-and-restored
+Cockpit,Canopy-close sound (control foley master),Toggle,aaron.boscali.cockpit-audio,Cockpit Audio,Canopy closing,True,True,clicked-and-restored
+Cockpit,Pull-up warning (voice master),Toggle,aaron.boscali.unified,Audio,Pull up warning,True,True,clicked-and-restored
+Cockpit,Terrain warning (voice master),Toggle,aaron.boscali.unified,Audio,Terrain warning,True,True,clicked-and-restored
+Cockpit,Over-G warning (voice master),Toggle,aaron.boscali.unified,Audio,Over G warning,True,True,clicked-and-restored
+Cockpit,Bingo warning (voice master),Toggle,aaron.boscali.unified,Audio,Bingo warning,True,True,clicked-and-restored
+NOAtmoFX,Clouds reflected in water and surfaces,Toggle,paul.no.clouds,General,CloudsInReflections,True,True,clicked-and-restored
+NOAtmoFX,NOAtmoFX ocean lighting,Toggle,paul.no.clouds,General,WaterLighting,True,True,clicked-and-restored
+NOAtmoFX,Cloud growth through the day,Toggle,paul.no.clouds,Weather,DiurnalCycle,True,True,clicked-and-restored

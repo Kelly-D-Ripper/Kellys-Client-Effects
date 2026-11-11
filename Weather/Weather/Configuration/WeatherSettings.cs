@@ -20,14 +20,27 @@ namespace BoscaliSummer.Modules.Weather.Configuration
         public ConfigEntry<float> TurbulenceMultiplier { get; }
 
         public ConfigEntry<bool> RainVisualsEnabled { get; }
+        public ConfigEntry<bool> RainStreaksEnabled { get; }
+        public ConfigEntry<bool> CloudPassageMistEnabled { get; }
         public ConfigEntry<bool> RainAudioEnabled { get; }
+        public ConfigEntry<bool> ThunderAudioEnabled { get; }
         public ConfigEntry<bool> CloudPassageShakeEnabled { get; }
         public ConfigEntry<bool> CinematicCloudsEnabled { get; }
         public ConfigEntry<bool> SunShaftsEnabled { get; }
+        public ConfigEntry<bool> SunDiscEnabled { get; }
         public ConfigEntry<bool> SkyPhenomenaEnabled { get; }
+        public ConfigEntry<bool> AuroraEnabled { get; }
+        public ConfigEntry<bool> RedSpritesEnabled { get; }
+        public ConfigEntry<bool> BlueJetsEnabled { get; }
+        public ConfigEntry<bool> ExtremeStormCloudDeckEnabled { get; }
+        public ConfigEntry<bool> ExtremeStormGroundMistEnabled { get; }
+        public ConfigEntry<bool> ExtremeStormFogEnabled { get; }
         public ConfigEntry<bool> DarkNightsEnabled { get; }
         public ConfigEntry<bool> OceanWavesEnabled { get; }
         public ConfigEntry<bool> SeaSprayEnabled { get; }
+        public ConfigEntry<bool> SeaSprayParticlesEnabled { get; }
+        public ConfigEntry<bool> SeaFoamWakeEnabled { get; }
+        public ConfigEntry<bool> SeaSurfaceWashEnabled { get; }
         public ConfigEntry<bool> CloudHalfResolution { get; }
         public ConfigEntry<bool> CloudTemporalUpdate { get; }
         public ConfigEntry<float> RainDensity { get; }
@@ -94,8 +107,15 @@ namespace BoscaliSummer.Modules.Weather.Configuration
                 "Master for local rain-streak particles, canopy rain and rain haze. " +
                 "Terrain wetness has a separate switch. Applies without restarting.");
 
+            RainStreaksEnabled = config.Bind(section, "RainStreaksEnabled", true,
+                "Falling rain streaks around the camera. Requires RainVisualsEnabled; canopy rain and cloud mist have separate switches.");
+            CloudPassageMistEnabled = config.Bind(section, "CloudPassageMistEnabled", true,
+                "Fine moisture particles while crossing cloud. Requires RainVisualsEnabled; does not change cloud shake, sounds or aircraft physics.");
+
             RainAudioEnabled = config.Bind(section, "RainAudioEnabled", true,
                 "Client-local rain rush and canopy patter through the game's effects mixer. Applies now.");
+            ThunderAudioEnabled = config.Bind(section, "ThunderAudioEnabled", true,
+                "Additional immediate thunder rumble in the extreme-storm preset. Requires RainAudioEnabled; native thunder is unchanged.");
 
             CloudPassageShakeEnabled = config.Bind(section, "CloudPassageShakeEnabled", true,
                 "Cockpit camera jolts and buffet while crossing clouds. Visual motion only; " +
@@ -108,10 +128,24 @@ namespace BoscaliSummer.Modules.Weather.Configuration
             SunShaftsEnabled = config.Bind(section, "SunShaftsEnabled", true,
                 "Beams of light around the sun, cut by clouds, terrain and aircraft. " +
                 "A quarter-resolution pass, drawn only while the sun is in or near the view; applies now.");
+            SunDiscEnabled = config.Bind(section, "SunDiscEnabled", true,
+                "Weather-tinted sun disc and its cloud extinction. Off restores the native sun material and brightness; sun shafts remain separate.");
 
             SkyPhenomenaEnabled = config.Bind(section, "SkyPhenomenaEnabled", true,
                 "Aurora curtains on clear nights, and red sprites and blue jets above distant night storms. " +
                 "Two small particle systems, built only at night; applies now.");
+            AuroraEnabled = config.Bind(section, "AuroraEnabled", true,
+                "Northern aurora curtains on suitable clear nights. Requires SkyPhenomenaEnabled; applies now.");
+            RedSpritesEnabled = config.Bind(section, "RedSpritesEnabled", true,
+                "Rare red sprite flashes above distant night thunderstorms. Requires SkyPhenomenaEnabled and visible storm lightning.");
+            BlueJetsEnabled = config.Bind(section, "BlueJetsEnabled", true,
+                "Rare blue jets above distant night thunderstorms. Requires SkyPhenomenaEnabled and visible storm lightning.");
+            ExtremeStormCloudDeckEnabled = config.Bind(section, "ExtremeStormCloudDeckEnabled", true,
+                "Extra thickness of the native cloud deck in the extreme-storm preset. Visual only; off restores native thickness without changing weather.");
+            ExtremeStormGroundMistEnabled = config.Bind(section, "ExtremeStormGroundMistEnabled", true,
+                "Terrain-hugging mist particles in the extreme-storm preset. Requires RainAtmosphereEnabled; separate from distance fog.");
+            ExtremeStormFogEnabled = config.Bind(section, "ExtremeStormFogEnabled", true,
+                "Extra reduced-visibility fog in the extreme-storm preset. Requires RainAtmosphereEnabled; terrain mist has a separate switch.");
 
             DarkNightsEnabled = config.Bind(section, "DarkNightsEnabled", false,
                 "Darker nights: ambient light, haze and the sky dome dim to about a third under a new moon " +
@@ -125,6 +159,12 @@ namespace BoscaliSummer.Modules.Weather.Configuration
             SeaSprayEnabled = config.Bind(section, "SeaSprayEnabled", true,
                 "Spray and foam wakes behind aircraft flying low over water. Independent of the weather master and ocean waves; " +
                 "client-local in single-player and multiplayer. Applies now.");
+            SeaSprayParticlesEnabled = config.Bind(section, "SeaSprayParticlesEnabled", true,
+                "Airborne spray sheets from low-flying aircraft over water. Requires SeaSprayEnabled; the KROP water-wake provider takes priority when enabled.");
+            SeaFoamWakeEnabled = config.Bind(section, "SeaFoamWakeEnabled", true,
+                "Foam patches left on the water behind low-flying aircraft. Requires SeaSprayEnabled; the KROP water-wake provider takes priority when enabled.");
+            SeaSurfaceWashEnabled = config.Bind(section, "SeaSurfaceWashEnabled", true,
+                "Ruffled water beneath low-flying aircraft in the enhanced ocean shader. Requires SeaSprayEnabled and OceanWavesEnabled; client-local.");
 
             CloudHalfResolution = config.Bind(section, "CloudHalfResolution", false,
                 "Experimental lower-cost half-resolution cloud pass. Falls back to native clouds if the pass cannot run. " +

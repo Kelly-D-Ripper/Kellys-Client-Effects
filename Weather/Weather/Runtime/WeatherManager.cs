@@ -569,7 +569,12 @@ namespace BoscaliSummer.Modules.Weather.Runtime
                 }
             }
             // Clouds, rain and terrain must read the same atmosphere for this frame.
-            if (liveWeather) { UpdateRainSystems(weatherTime); sunDisc.Tick(LevelInfo.i, view, viewTransmission); }
+            if (liveWeather)
+            {
+                UpdateRainSystems(weatherTime);
+                if (settings.SunDiscEnabled.Value) sunDisc.Tick(LevelInfo.i, view, viewTransmission);
+                else sunDisc.Release();
+            }
             else { environmentSnapshot = default; TeardownRainSystems(); atmosphere.Restore(); HighAltitudeSky.Clear(); sunDisc.Release(); }
             if (liveWeather) heatHaze.Update(Time.unscaledTime);
             else heatHaze.Restore();
@@ -656,8 +661,9 @@ namespace BoscaliSummer.Modules.Weather.Runtime
             cloudShade = Mathf.MoveTowards(cloudShade, shadeTarget, Time.deltaTime * 0.1f);
             bool underwaterView = currentCam.transform.position.y < Datum.LocalSeaY;
             bool hazeEnabled = settings == null || settings.RainAtmosphereEnabled.Value;
+            extremeDressing.SetCloudDeckEnabled(settings == null || settings.ExtremeStormCloudDeckEnabled.Value);
             extremeDressing.Tick(LevelInfo.i, currentCam, IsExtremeStorm,
-                hazeEnabled && !underwaterView, Time.deltaTime);
+                hazeEnabled && !underwaterView && (settings == null || settings.ExtremeStormGroundMistEnabled.Value), Time.deltaTime);
             FlightWeatherAirMass airMass = FlightWeatherAirMass.Evaluate(airPoint,
                 cloudPosition.y, viewDensity, forcedRainIntensity, clouds.ApproximateTop(LevelInfo.i));
             viewTemperature = airPoint.Temperature - Mathf.Max(0f, cloudPosition.y) * 0.0065f;
@@ -745,7 +751,7 @@ namespace BoscaliSummer.Modules.Weather.Runtime
                 atmosphere.Apply(RainVisualsEnabled
                     ? rainIntensity : 0f, underwaterView, cloudShade, LevelInfo.i != null ? LevelInfo.i.sun : null,
                     LevelInfo.i != null && LevelInfo.i.moon != null ? LevelInfo.i.moon.intensity : 0f,
-                    DarkNightsEnabled, viewHeight, IsExtremeStorm, heightAboveGround,
+                    DarkNightsEnabled, viewHeight, IsExtremeStorm && settings.ExtremeStormFogEnabled.Value, heightAboveGround,
                     clouds.ApproximateTop(LevelInfo.i) ?? (ExtremeStormProfile.UpperDeckBase + ExtremeStormProfile.NativeThickness + 1500f));
             else atmosphere.Restore();
             // From very high up: the curved Earth past the far plane, and cloud layers that stop at its horizon.
@@ -755,6 +761,8 @@ namespace BoscaliSummer.Modules.Weather.Runtime
             // Night sky (2026-10-18): aurora on clear nights (seeded per mission: about seven missions in ten get one), and sprites and
             // jets that the lightning below fires over distant night storms.
             bool skyPhenomena = settings.SkyPhenomenaEnabled.Value;
+            phenomena.ConfigureFeatures(skyPhenomena && settings.AuroraEnabled.Value,
+                skyPhenomena && settings.RedSpritesEnabled.Value, skyPhenomena && settings.BlueJetsEnabled.Value);
             lightning.Phenomena = skyPhenomena ? phenomena : null;
             if (skyPhenomena)
             {
@@ -766,14 +774,16 @@ namespace BoscaliSummer.Modules.Weather.Runtime
             else phenomena.Reset();
 
             // Storms remain visible/audible from dry air; they do not depend on a rain emitter.
-            if (settings.LightningEnabled.Value || settings.RainAudioEnabled.Value)
+            bool thunderAudio = settings.RainAudioEnabled.Value && settings.ThunderAudioEnabled.Value;
+            if (settings.LightningEnabled.Value || thunderAudio)
                 lightning.Tick(Field, missionTime, cloudPosition, currentCam,
                     settings.ReducedFlashes.Value || !settings.LightningEnabled.Value,
-                    settings.RainAudioEnabled.Value, isCockpit, IsExtremeStorm);
+                    thunderAudio, isCockpit, IsExtremeStorm);
             else lightning.Reset();
 
-            float cloudMist = RainVisualsEnabled ? cloudMoisture * rainExposure : 0f;
-            bool wantSystems = visualIntensity > 0.02f || canopyWetness > 0.001f || cloudMist > 0.02f ||
+            float cloudMist = RainVisualsEnabled && settings.CloudPassageMistEnabled.Value ? cloudMoisture * rainExposure : 0f;
+            float streakIntensity = settings.RainStreaksEnabled.Value ? visualIntensity : 0f;
+            bool wantSystems = streakIntensity > 0.02f || canopyWetness > 0.001f || cloudMist > 0.02f ||
                 (RainVisualsEnabled && settings.CanopyRainEnabled.Value && glassMoisture > 0.001f) ||
                 (settings.RainAudioEnabled.Value && (incomingRain > 0.02f || (isCockpit && cloudMoisture > 0.02f)));
             if (rainRoot == null && !wantSystems) return;
@@ -801,8 +811,10 @@ namespace BoscaliSummer.Modules.Weather.Runtime
 
             if (rainEmitter != null)
             {
+                rainEmitter.ConfigureFeatures(RainVisualsEnabled && settings.RainStreaksEnabled.Value,
+                    RainVisualsEnabled && settings.CloudPassageMistEnabled.Value);
                 rainEmitter.SetTint(RenderSettings.fogColor);
-                rainEmitter.UpdateRain(isCockpit ? airVel : Vector3.zero, currentWind, visualIntensity, currentCam,
+                rainEmitter.UpdateRain(isCockpit ? airVel : Vector3.zero, currentWind, streakIntensity, currentCam,
                     settings != null ? settings.RainDensity.Value : 1f, 1f, lightLevel, cloudMist);
             }
             // Impact sound follows incoming water, independently of optional glass rendering.

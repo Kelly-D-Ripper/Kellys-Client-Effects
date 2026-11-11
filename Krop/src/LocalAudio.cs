@@ -45,7 +45,7 @@ namespace KropClientEffects
         private static void Prefix(BulletSim.Bullet __instance,out GlobalPosition __state) { __state=__instance.position; }
         private static void Postfix(BulletSim.Bullet __instance,GlobalPosition __state,Transform muzzle,WeaponInfo info,Unit owner,bool hasCamera,GlobalPosition cameraPos)
         {
-            if (!Settings.Active || !BulletConfig.Enabled.Value || muzzle!=null || !hasCamera || Heard.TryGetValue(__instance,out _)) return;
+            if (!Settings.Active || (!BulletConfig.Enabled.Value && !BulletConfig.Shake.Value) || muzzle!=null || !hasCamera || Heard.TryGetValue(__instance,out _)) return;
             float speedOfSound=LevelInfo.GetSpeedOfSound(__instance.position.y);
             if (__instance.velocity.magnitude<=speedOfSound) return;
             if (owner!=null && GameManager.IsLocalAircraft(owner) && AudioFilters.InCockpit()) return;
@@ -57,7 +57,8 @@ namespace KropClientEffects
             float pitch=EffectMath.CaliberPitch(info!=null?info.massPerRound:0f,BulletConfig.SmallPitch.Value,BulletConfig.LargePitch.Value);
             float massFraction=info!=null?Mathf.Clamp01((Mathf.Log(Mathf.Max(0.04f,info.massPerRound))-Mathf.Log(0.04f))/(Mathf.Log(50f)-Mathf.Log(0.04f))):0.5f;
             float volume=Mathf.Lerp(BulletConfig.SmallVolume.Value,BulletConfig.LargeVolume.Value,massFraction);
-            LocalAudio.Play(null,BulletCrackAssets.Clip,closest.ToLocalPosition(),volume,pitch:pitch+EffectRandom.Range(-0.15f,0.15f),shapeCrack:AudioRefinements.CrackShaping.Value);
+            if(BulletConfig.Enabled.Value)
+                LocalAudio.Play(null,BulletCrackAssets.Clip,closest.ToLocalPosition(),volume,pitch:pitch+EffectRandom.Range(-0.15f,0.15f),shapeCrack:AudioRefinements.CrackShaping.Value);
             if (BulletConfig.Shake.Value && pitch<BulletConfig.ShakePitchThreshold.Value)
             {
                 var camera=SceneSingleton<CameraStateManager>.i;

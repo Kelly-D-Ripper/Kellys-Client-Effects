@@ -1,8 +1,14 @@
-# Client Effects & Weather 0.8.5 - candidate
+# Client Effects & Weather 0.8.6 - candidate
 
-Optional NVGs and sound travel. Your camera can stop putting the bloody goggles back on.
+More switches. Fewer effects hiding behind other bloody switches.
 
-This candidate builds on the complete 0.8.4 draft, including its standalone startup repair and optional KROP effects. Open FX on the map MFD or press Ctrl + F8. The new NVG appearance and sound-travel options start off.
+This candidate builds on 0.8.5, including the accessibility-colour repair, optional NVGs and sound travel. Open FX on the map MFD or press Ctrl + F8. If you use BepInEx Configuration Manager, its F1 menu now finds all eight internal modules without adding extra DOORMAN entries.
+
+Ground-roll / takeoff vibration is under **FX > EFFECTS > COCKPIT**. Enable Cockpit shake and Ground-roll / takeoff vibration, then set the ground-roll strength to taste. F1 has the same settings under the Cockpit Feel module. It runs in the cockpit while moving on the ground and stops after takeoff; Comfort motion reduces it.
+
+This pass adds individual switches for recoil, landing and gear jolts, transonic buffet, the sonic-crossing jolt, breathing and cockpit sound layers, each extra voice warning, sun-disc colouring, aurora/sprites/jets, extreme-storm layers, rain streaks/cloud mist and the three ocean-wake layers. Existing master switches and settings still apply. New child switches start on to preserve the behaviour you already selected; optional NVG and sound-travel masters still start off.
+
+Large-round camera shake now works with Bullet cracks sound switched off. NOAtmoFX gains MFD controls for reflected clouds, water lighting and daily cloud growth. Its ten numeric effects also get real F1 checkboxes alongside their existing tuning controls. NOAtmoFX remains a separate download.
 
 The FX MFD panel follows the game's accessibility Primary colour, with Secondary for the weather readout and clock. Changes apply without reopening the panel, including its NOAtmoFX controls.
 
@@ -18,13 +24,15 @@ The 0.8.4 additions are retained:
 
 The sound and visual additions are optional. Audio-listener and missile-warning protections are applied while the relevant module is active.
 
-No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. Weather/time commands retain their single-player restriction. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
+No server plugin is required by the new presentation features. They do not alter ammunition, damage, countermeasure physics or AI controls. Boscali MET OFFICE weather presets and time controls remain single-player. NOAtmoFX controls follow its host/local multiplayer policy. Manual canopy/ramp controls and parked-AI changes are not part of this candidate.
 
 ## Requirements
 
 **Install BepInEx 5 for Windows x64/Mono first. It is required and is not bundled with this pack.** Use the official [BepInEx 5.4.23.6 release](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.6). No separate .NET SDK is needed.
 
 DOORMAN and Blueprinter are optional. The pack's menus work without either. NOAtmoFX is also optional and only needed for Volumetric mode.
+
+**F1 requires BepInEx Configuration Manager**, installed separately. The audited version is 19.1. It is not bundled. FX on the map MFD and Ctrl + F8 work without Configuration Manager.
 
 ## Install only when ready to test
 
@@ -41,7 +49,7 @@ Open the expanded map in a mission and look for **FX**, normally on the right-ha
 
 [NOAtmoFX](https://github.com/paulleonard1314-lang/NoAtmoFX/releases) remains an optional separate download and is not included.
 
-This is a local candidate, not an installed or published update. See VALIDATION-0.8.5.md for checks of these exact files and remaining limits. Real multiplayer, longer performance runs, physical keyboard/visible Ctrl+F8 testing and human flight/audio acceptance remain separate checks. No FPS improvement is claimed.
+This is a local candidate, not an installed or published update. See [the effect audit](EFFECT-TOGGLE-AUDIT.md) for the full control inventory and exact validation limits. Real multiplayer, longer performance runs, physical keyboard delivery and human flight/audio acceptance remain separate checks. No FPS improvement is claimed.
 
 NVG auto-gain's real rendering sample and cleanup pass, but its ordinary visible-window operation still needs a flight check; the hidden test window skips normal rendering. It remains off by default.
 

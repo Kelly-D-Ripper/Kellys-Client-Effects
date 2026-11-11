@@ -25,24 +25,32 @@ namespace BoscaliClientExperimental.Weather
 
         private readonly float[] nextAt = new float[5];
         private bool bingoArmed = true;
+        private bool pullUpOn = true, terrainOn = true, overGOn = true, bingoOn = true;
 
-        public static Warning Ground(WarningInput s)
+        public void SetFeatures(bool pullUp, bool terrain, bool overG, bool bingo)
+        {
+            pullUpOn = pullUp; terrainOn = terrain; overGOn = overG; bingoOn = bingo;
+        }
+
+        public static Warning Ground(WarningInput s) => SelectGround(s, true, true);
+
+        private static Warning SelectGround(WarningInput s, bool pullUp, bool terrain)
         {
             if (!s.Airborne || float.IsNaN(s.RadarAltM) || float.IsNaN(s.ClimbMps) || s.RadarAltM >= AglCeilingM || s.ClimbMps >= 0f)
                 return Warning.None;
             float sink = -s.ClimbMps;
             if (s.GearDown && sink < GearDownSinkMps) return Warning.None;
-            if (s.RadarAltM / sink < PullUpSeconds) return Warning.PullUp;
-            return s.RadarAltM < TerrainAglM && sink > TerrainSinkMps ? Warning.Terrain : Warning.None;
+            if (pullUp && s.RadarAltM / sink < PullUpSeconds) return Warning.PullUp;
+            return terrain && s.RadarAltM < TerrainAglM && sink > TerrainSinkMps ? Warning.Terrain : Warning.None;
         }
 
         /// <summary>The warning to say at <paramref name="now"/> (seconds), or None when nothing is due.</summary>
         public Warning Step(WarningInput s, float now)
         {
             if (s.Fuel01 > BingoRearm) bingoArmed = true;
-            Warning due = Ground(s);
-            if (due == Warning.None && s.Airborne && s.G > OverG) due = Warning.OverG;
-            if (due == Warning.None && s.Airborne && bingoArmed && s.Fuel01 > 0f && s.Fuel01 <= BingoFuel) due = Warning.Bingo;
+            Warning due = SelectGround(s, pullUpOn, terrainOn);
+            if (due == Warning.None && overGOn && s.Airborne && s.G > OverG) due = Warning.OverG;
+            if (due == Warning.None && bingoOn && s.Airborne && bingoArmed && s.Fuel01 > 0f && s.Fuel01 <= BingoFuel) due = Warning.Bingo;
             if (due == Warning.None || now < nextAt[(int)due]) return Warning.None;
             nextAt[(int)due] = now + Repeat[(int)due];
             if (due == Warning.Bingo) bingoArmed = false;

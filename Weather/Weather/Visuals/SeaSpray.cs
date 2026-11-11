@@ -25,6 +25,7 @@ namespace BoscaliSummer.Modules.Weather.Visuals
         private Material material, wakeMaterial;
         private Texture2D texture, wakeTexture;
         private bool failed;
+        private bool sprayEnabled = true, foamWakeEnabled = true, surfaceWashEnabled = true;
         private readonly Dictionary<int, float> carry = new Dictionary<int, float>();
         private readonly Dictionary<int, float> wakeRun = new Dictionary<int, float>();
         private uint noise = 0x9E3779B9u;
@@ -37,10 +38,29 @@ namespace BoscaliSummer.Modules.Weather.Visuals
         internal int Particles => system != null ? system.particleCount : 0;
         internal int WakeParticles => wake != null ? wake.particleCount : 0;
 
+        internal void ConfigureFeatures(bool sprayOn, bool foamWakeOn, bool surfaceWashOn)
+        {
+            if (!sprayOn)
+            {
+                if (system != null) system.Clear();
+                carry.Clear();
+                Strongest = 0f;
+            }
+            if (!foamWakeOn)
+            {
+                if (wake != null) wake.Clear();
+                wakeRun.Clear();
+            }
+            if (!surfaceWashOn) WashCount = 0;
+            sprayEnabled = sprayOn; foamWakeEnabled = foamWakeOn; surfaceWashEnabled = surfaceWashOn;
+            if (!sprayOn && !foamWakeOn && !surfaceWashOn) Reset();
+        }
+
         internal void Tick(Camera camera, float seaY, float waveHeight, bool emit, float dt)
         {
             WashCount = 0;
             Strongest = 0f;
+            if (!sprayEnabled && !foamWakeEnabled && !surfaceWashEnabled) return;
             List<Aircraft> aircraft = UnitRegistry.allAircraft;
             // Scene/mission transitions can briefly retain a camera and registry without an origin.
             // The particle systems use that transform as their simulation space.
@@ -62,11 +82,11 @@ namespace BoscaliSummer.Modules.Weather.Visuals
                 Vector3 velocity = plane.rb.velocity;
                 Vector2 flat = new Vector2(velocity.x, velocity.z);
                 float wash = SeaState.WashIntensity(height, radius);
-                if (wash > 0.01f) AddWash(plane, at, flat, radius, height, speed, wash);
+                if (surfaceWashEnabled && wash > 0.01f) AddWash(plane, at, flat, radius, height, speed, wash);
                 float spray = SeaState.SprayIntensity(height, speed, radius);
-                Strongest = Mathf.Max(Strongest, spray);
-                if (emit && spray > 0.01f) Emit(plane, at, flat, velocity, radius, seaY, spray, dt);
-                if (emit && wash > 0.05f && speed > 15f && foam.a > 0.02f) DropWake(plane, at, flat, radius, seaY, wash, speed, foam, dt);
+                if (sprayEnabled) Strongest = Mathf.Max(Strongest, spray);
+                if (emit && sprayEnabled && spray > 0.01f) Emit(plane, at, flat, velocity, radius, seaY, spray, dt);
+                if (emit && foamWakeEnabled && wash > 0.05f && speed > 15f && foam.a > 0.02f) DropWake(plane, at, flat, radius, seaY, wash, speed, foam, dt);
             }
             if (!emit && root != null && root.activeSelf && system.particleCount == 0 && (wake == null || wake.particleCount == 0))
                 root.SetActive(false);

@@ -713,6 +713,7 @@ public sealed partial class MetDriver : MonoBehaviour
             Need(!Chainloader.PluginInfos.ContainsKey("aaron.boscali.clouds-hybrid") && !Chainloader.PluginInfos.ContainsKey("aaron.nuclearoption.volumetricclouds"),"replacement cloud plugins absent");
             var weather=Chainloader.PluginInfos["aaron.boscali.weather-unified"].Instance;
             assembly=weather.GetType().Assembly;
+            await TestConfigurationManagerMenus();
             TestPureContracts();
             TestVoiceWarningSwitch();
             TestCoreLifeboatFixtures();
@@ -724,6 +725,8 @@ public sealed partial class MetDriver : MonoBehaviour
             await Until(()=>MissionManager.IsRunning && LevelInfo.i!=null && SceneSingleton<CameraStateManager>.i?.mainCamera!=null,90,"offline mission and native camera ready");
             await Until(()=>GameManager.GetLocalAircraft(out _),35,"native local aircraft ready");
             camera=SceneSingleton<CameraStateManager>.i.mainCamera;
+            TestCockpitEffectToggles();
+            TestKropBulletToggles();
             if(Chainloader.PluginInfos.TryGetValue("paul.no.clouds",out var missionAddon)) Note("INFO addon after mission alive="+(missionAddon.Instance!=null));
             TestKropPerformance();
             TestKropAudioRefinements();
@@ -752,6 +755,8 @@ public sealed partial class MetDriver : MonoBehaviour
             Need(((RectTransform)Field(launcher,"effectsPage")).gameObject.activeInHierarchy && !((RectTransform)Field(launcher,"weatherPage")).gameObject.activeSelf,"combined MFD opens on effects tab");
             await TestMfdAccessibilityColours(launcher);
             object effects=Field(launcher,"effects");
+            TestEffectMenuCoverage();
+            CaptureGranularEffectControls(effects, launcher);
             TestKropOptionalUi(effects, launcher);
             TestKropNightAudioUi(effects, launcher);
             var rows=(UnityEngine.UI.Button[])Field(effects,"rows");
@@ -995,6 +1000,8 @@ public sealed partial class MetDriver : MonoBehaviour
             Capture("met-office.png",true);
             Call(console,"Close");
             TestRainAltitude();
+            TestWeatherSkyFeatureToggles();
+            TestWeatherSunAndRainFeatureToggles(weather.Config);
             await TestStorm(weather.Config);
             await TestThunder();
             GameManager.GetLocalAircraft(out var sprayPlane); TestSeaSpray(sprayPlane);
@@ -1174,6 +1181,7 @@ public sealed partial class MetDriver : MonoBehaviour
         Need((float)Field(layer,"layerThickness")>=1100f,"extreme native cloud deck thickened");
         object dressing=Field(manager,"extremeDressing");
         Need((bool)Prop(dressing,"DeckApplied") && (int)Prop(dressing,"MistParticles")>0 && (int)Prop(dressing,"MistParticles")<=36,"extreme terrain mist exists within bounded particle budget");
+        TestWeatherExtremeFeatureToggles(config);
         Need((byte)Prop(Field(manager,"fieldKey"),"SkyPin")==47,"new preset survives key serialization range");
         Capture("extreme-storm.png");
         TestFogAndMissingCamera();
@@ -1326,6 +1334,7 @@ public sealed partial class MetDriver : MonoBehaviour
                 "spray stays in floating-origin simulation space");
             Need(particles.GetComponent<ParticleSystemRenderer>().sharedMaterial.shader.isSupported, "spray material shader supported by running graphics device");
             TestKropWaterProvider(plane);
+            TestWeatherSeaFeatureToggles();
 
             enabledSpray.Value = false; RunTick(GameState.SinglePlayer);
             Need(Count("Particles") == 0 && Count("WakeParticles") == 0 && Count("WashCount") == 0,

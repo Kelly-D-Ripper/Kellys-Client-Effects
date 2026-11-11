@@ -1,4 +1,4 @@
-"""Seal the tested local 0.8.5 candidate; never install or publish it."""
+"""Seal the tested local 0.8.6 candidate; never install or publish it."""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +12,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parent
-VERSION = "0.8.5"
+VERSION = "0.8.6"
 BASELINE = ROOT.parent / "SinglePluginCandidate/dist/KellysClientEffects-v0.8.3-CLIENT.zip"
 BASELINE_SHA = "CAA9E4AA43AEBEBBD9010651F9DA9919E1CB35948A3B50B71CEDFD3BE151BB02"
 STARTUP_SHA = "35CC24B43BA7B8837052958E0DA01C3483ABDB44C743C9A723FA57DA0C8DB79A"
@@ -56,6 +56,13 @@ def verify_run(directory: Path, payload: dict[str, bytes]) -> dict:
         require(staged.is_file() and sha(staged.read_bytes()) == sha(expected), f"Staged artifact differs: {staged}")
     checks = len(re.findall(r"(?m)^PASS [^\r\n]", result))
     require(checks > 0, f"Empty passing result: {directory}")
+    menu_path = directory / "BepInEx/plugins/Probe/effect-menu-coverage.json"
+    menu = read_json(menu_path) if menu_path.exists() else None
+    if menu is not None:
+        require(not menu["failures"], "Menu audit has failures")
+        require(len(menu["booleans"]) == menu["booleanCount"] and len(menu["mfdRows"]) == menu["mfdRowCount"], "Incomplete menu inventory")
+        require(menu["rootSha256"].upper() == sha(payload[MAIN_NAME]), "Menu inventory uses a different main DLL")
+    f1_path = directory / "BepInEx/plugins/Probe/f1-render-status.json"
     return {
         "directory": str(directory),
         "checks": checks,
@@ -65,6 +72,11 @@ def verify_run(directory: Path, payload: dict[str, bytes]) -> dict:
         "disabledBoot": bool(launch.get("disabledBoot", False)),
         "doormanInstalled": "plugins/KellysJOINCHECK.dll" in recorded,
         "noAtmoInstalled": "plugins/NoAtmoFX/NoAtmoFX.dll" in recorded,
+        "configurationManagerInstalled": "plugins/ConfigurationManager/ConfigurationManager.dll" in recorded,
+        "menuAuditSha256": sha(menu_path.read_bytes()) if menu is not None else None,
+        "menuBooleans": menu["booleanCount"] if menu is not None else None,
+        "menuRows": menu["mfdRowCount"] if menu is not None else None,
+        "f1CustomDrawerRendering": read_json(f1_path) if f1_path.exists() else None,
         "protectedPlayerFiles": protected.get("checkedPlayerFiles"),
         "playerPrefsMatchBaseline": True,
         "playerFilesUnchanged": True,
@@ -74,6 +86,7 @@ def verify_run(directory: Path, payload: dict[str, bytes]) -> dict:
 def external_links(markdown: str) -> str:
     # The lean archive contains no standalone source/credit files. Keep every link useful.
     markdown = markdown.replace("](" + "CREDITS.md)", "](#credits)")
+    markdown = markdown.replace("](EFFECT-TOGGLE-AUDIT.md)", "](#effect-control-audit)")
     return re.sub(
         r"\]\((?!https?://|#)([^)]+)\)",
         lambda match: "](" + SOURCE_URL + "/blob/main/" + match[1] + ")",
@@ -90,9 +103,11 @@ def packaged_readme(baseline: zipfile.ZipFile) -> bytes:
     require("</details>" in notices, "Pinned licence block is incomplete")
     intro = (ROOT / "README.md").read_text(encoding="utf-8-sig").rstrip()
     credits = (ROOT / "CREDITS.md").read_text(encoding="utf-8-sig").rstrip()
+    control_audit = (ROOT / "EFFECT-TOGGLE-AUDIT.md").read_text(encoding="utf-8-sig").rstrip()
     require(VERSION in intro, "Candidate README does not identify " + VERSION)
     require("\u2014" not in intro + credits, "README/credits must use regular hyphens")
     combined = external_links(intro) + "\n\n" + external_links(credits) + "\n\n"
+    combined += '<a id="effect-control-audit"></a>\n<details>\n<summary>Full effect and menu audit</summary>\n\n' + control_audit + '\n\n</details>\n\n'
     combined += (
         "[Source repository](" + SOURCE_URL + ") | "
         "[Adapted canopy-rain shader source and masks](" + SOURCE_URL +
@@ -163,15 +178,16 @@ def main() -> None:
         "installed": False,
         "published": False,
         "databaseImpact": "none",
-        "configurationImpact": "Additive optional settings default off, including permission for native camera auto-NVG. Camera auto-selection is therefore blocked by default while the KROP module is enabled. Existing config identities and values retained. No config files are included or overwritten.",
+        "configurationImpact": "Additive child-effect switches default on beneath the unchanged master switches; ground-roll strength defaults to 1. Existing settings and optional NVG/audio defaults are retained. F1 metadata is transient; original config entries remain authoritative. No config files are included or overwritten.",
         "baseline": {"archive": BASELINE.name, "sha256": BASELINE_SHA},
-        "featureBaseline": {"version": "0.8.4", "sourceCommit": "ab62a87a7cf4caa2b3c53e0b523896285043ca7d"},
-        "sourceBranch": "codex/optional-nvg-audio-0.8.5",
+        "featureBaseline": {"version": "0.8.5", "sourceCommit": "dc1f01e5685929d61b117be5619119d0a7d94538"},
+        "sourceBranch": "codex/effect-toggle-audit-0.8.6",
         "sourceCommit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "sourceDirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()),
         "files": [{"path": name, "size": len(data), "sha256": sha(data)} for name, data in sorted(payload.items())],
         "missionTests": runs,
         "limits": [
+            "F1 custom-drawer visible rendering remains OPEN when the hidden fixture receives no OnGUI events. Original config bindings, checkbox callbacks and real F1 menu discovery are tested separately.",
             "Visible ordinary-frame NVG auto-gain sampling remains open: hidden tests suppress normal camera rendering; actual URP render-request sampling and cleanup pass.",
             "Live multiplayer acceptance against an unmodified server/client remains open.",
             "Sustained frame-time and performance acceptance remains open; no FPS improvement claimed.",

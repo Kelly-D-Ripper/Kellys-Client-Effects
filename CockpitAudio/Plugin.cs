@@ -43,6 +43,8 @@ namespace BoscaliCockpitAudio
     {
         internal static CockpitAudioRuntime Live;
         private ConfigEntry<bool> breathing, creaks, wind, softRadar, controls;
+        private ConfigEntry<bool> breathCycles, gStrain, gSuit, heartbeat, recoveryGasps;
+        private ConfigEntry<bool> structuralCreaks, harnessStrain, impactFoley, gearLever, canopyClosing;
         internal bool SoftRadarActive => active && softRadar != null && softRadar.Value;
         private readonly PilotPhysiology physiology = new PilotPhysiology();
         private readonly PilotVitals vitals = new PilotVitals();
@@ -70,6 +72,16 @@ namespace BoscaliCockpitAudio
             wind = config.Bind("Cockpit Audio", "CanopyWind", true, "Cockpit wind and slipstream; independent of other audio settings.");
             softRadar = config.Bind("Cockpit Audio", "SoftRadarTones", false, "Optional Boscali radar warning beeps only in own cockpit. Off preserves native radar sounds immediately.");
             controls = config.Bind("Cockpit Audio", "ControlFoley", true, "Cockpit gear lever and ground-start canopy closing sounds.");
+            breathCycles = config.Bind("Cockpit Audio", "Breathing cycles", true, "Oxygen-mask inhale and exhale. Requires PilotBreathing.");
+            gStrain = config.Bind("Cockpit Audio", "G strain", true, "Pilot straining grunts and exertion gasps. Requires PilotBreathing.");
+            gSuit = config.Bind("Cockpit Audio", "G suit hiss", true, "Anti-G suit inflation and venting. Requires PilotBreathing.");
+            heartbeat = config.Bind("Cockpit Audio", "Heartbeat", true, "Pilot heartbeat under load. Requires PilotBreathing.");
+            recoveryGasps = config.Bind("Cockpit Audio", "Recovery gasps", true, "Wake-up breath after regaining consciousness. Requires PilotBreathing.");
+            structuralCreaks = config.Bind("Cockpit Audio", "Structural creaks", true, "Airframe stress creaking. Requires AirframeCreaks.");
+            harnessStrain = config.Bind("Cockpit Audio", "Harness strain", true, "Harness creaks as G load changes. Requires AirframeCreaks.");
+            impactFoley = config.Bind("Cockpit Audio", "Impact foley", true, "Cockpit hull thuds and hit pings. Requires AirframeCreaks.");
+            gearLever = config.Bind("Cockpit Audio", "Gear lever", true, "Cockpit gear-lever movement sounds. Requires ControlFoley.");
+            canopyClosing = config.Bind("Cockpit Audio", "Canopy closing", true, "Canopy closing sound when starting on the ground. Requires ControlFoley.");
             Live = this;
             harmony = new Harmony(Plugin.Id);
             var target = AccessTools.GetDeclaredMethods(typeof(Aircraft)).Find(m => m.Name.StartsWith("UserCode_RpcDamage_", StringComparison.Ordinal));
@@ -91,7 +103,7 @@ namespace BoscaliCockpitAudio
             if (live == null || !live.active || __instance != live.aircraft) return;
             float pierce = __1.pierceDamage.Decompress(), blast = __1.blastDamage.Decompress();
             live.vitals.AddHit(blast);
-            if (live.creaks.Value) live.foley?.Hit(pierce, blast);
+            if (live.creaks.Value && live.impactFoley.Value) live.foley?.Hit(pierce, blast);
         }
         private void SceneUnloaded(Scene scene) { ResetScene(); RadarTones.Clear(); }
         private void FixedUpdate()
@@ -127,7 +139,8 @@ namespace BoscaliCockpitAudio
             {
                 if (airframe == null) { airframe = gameObject.AddComponent<AirframeAudio>(); airframe.Initialize(); }
                 if (foley == null) { foley = new CockpitFoley(); foley.Initialize(gameObject); }
-                airframe.TryRoute(); airframe.Tick(forces.ForceG, dt, true, .55f, true);
+                airframe.TryRoute(); airframe.Tick(forces.ForceG, dt, structuralCreaks.Value, .55f, true);
+                foley.SetFeatures(harnessStrain.Value, impactFoley.Value);
                 foley.Tick(physiology.LoadG, dt, true);
             }
             else { airframe?.Silence(); foley?.Reset(); }
@@ -143,12 +156,14 @@ namespace BoscaliCockpitAudio
             if (breathing.Value)
             {
                 if (breath == null) { breath = gameObject.AddComponent<PilotBreathingAudio>(); breath.Initialize(); }
+                breath.SetFeatures(breathCycles.Value, gStrain.Value, gSuit.Value, heartbeat.Value, recoveryGasps.Value);
                 breath.TryRoute(); breath.Tick(cues, physiology, true);
             }
             else breath?.Silence();
             if (controls.Value)
             {
                 if (controlsAudio == null) controlsAudio = new ControlFoley(gameObject);
+                controlsAudio.SetFeatures(gearLever.Value, canopyClosing.Value);
                 controlsAudio.Tick(aircraft);
             }
             else controlsAudio?.Disable(aircraft);

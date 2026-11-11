@@ -11,6 +11,8 @@
     <Reference Include="UniTask" HintPath="$(Managed)\UniTask.dll" Private="false" />
     <Reference Include="UnityEngine" HintPath="$(Managed)\UnityEngine.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(Managed)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="$(Managed)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.JSONSerializeModule" HintPath="$(Managed)\UnityEngine.JSONSerializeModule.dll" Private="false" />
     <Reference Include="UnityEngine.PhysicsModule" HintPath="$(Managed)\UnityEngine.PhysicsModule.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="Unity.TextMeshPro" HintPath="$(Managed)\Unity.TextMeshPro.dll" Private="false" />

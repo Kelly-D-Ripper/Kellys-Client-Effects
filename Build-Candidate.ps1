@@ -8,11 +8,11 @@ $stage=Join-Path $PSScriptRoot ('staging\build-'+$stamp)
 $rebuilt=Join-Path $stage 'rebuilt'
 $prepared=Join-Path $stage 'prepared'
 New-Item -ItemType Directory -Path $rebuilt,$prepared -Force | Out-Null
-foreach($project in @('Krop\KROP-Unified.csproj','MissileBoom\ExperimentalMissileBoom.csproj','Controls\ClientEffectsControlPanel.csproj')) {
+foreach($project in @('Core\BoscaliClientExperimental.csproj','Krop\KROP-Unified.csproj','CockpitAudio\CockpitAudio.csproj','CockpitFeel\CockpitFeel.csproj','MissileBoom\ExperimentalMissileBoom.csproj','Controls\ClientEffectsControlPanel.csproj')) {
     & $sdk build (Join-Path $PSScriptRoot $project) -c Release "-p:GameDir=$GameDir" --nologo
     if($LASTEXITCODE -ne 0){throw "Build failed: $project"}
 }
-foreach($pair in @(@('Krop\bin\Release\net472\KROP.UnifiedEffects.dll','KROP.UnifiedEffects.dll'),@('MissileBoom\bin\Release\net472\Boscali.UnifiedMissileBoom.dll','Boscali.UnifiedMissileBoom.dll'),@('Controls\bin\Release\net472\ClientEffectsControlPanel.dll','ClientEffectsControlPanel.dll'))) {
+foreach($pair in @(@('Core\bin\Release\net472\BoscaliUnified.dll','BoscaliUnified.dll'),@('Krop\bin\Release\net472\KROP.UnifiedEffects.dll','KROP.UnifiedEffects.dll'),@('CockpitAudio\bin\Release\net472\Boscali.CockpitAudio.dll','Boscali.CockpitAudio.dll'),@('CockpitFeel\bin\Release\net472\Boscali.CockpitFeel.dll','Boscali.CockpitFeel.dll'),@('MissileBoom\bin\Release\net472\Boscali.UnifiedMissileBoom.dll','Boscali.UnifiedMissileBoom.dll'),@('Controls\bin\Release\net472\ClientEffectsControlPanel.dll','ClientEffectsControlPanel.dll'))) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $pair[0]) -Destination (Join-Path $rebuilt $pair[1])
 }
 $baseline=Join-Path (Split-Path -Parent $PSScriptRoot) 'Release082Candidate\dist\KellysClientEffects-v0.8.2-CLIENT.zip'
